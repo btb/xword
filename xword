@@ -43,6 +43,12 @@ try:
 except:
     has_print = False
 
+try:
+    import hildon
+    has_hildon = True
+except:
+    has_hildon = False
+    
 import pango
 import sys
 import time
@@ -1174,13 +1180,17 @@ class PuzzleWindow:
         self.layout = 0
         self.window_size = (900, 600)
         self.maximized = False
+        self.fullscreen = False
         self.positions = layouts[self.layout][1]
         self.default_loc = None
 
         title = 'Crossword Puzzle'
         if self.puzzle: title = 'Crossword Puzzle - %s' % self.puzzle.title
         
-        win = gtk.Window()
+        if has_hildon:
+            win = hildon.Window()
+        else:
+            win = gtk.Window()
         self.handler = win.connect('destroy', lambda w: self.exit())
         win.set_title(title)
         win.connect('size-allocate', self.resize_window)
@@ -1220,6 +1230,13 @@ class PuzzleWindow:
 
         if not self.puzzle: self.enable_controls(False)
 
+        if has_hildon:
+            menu = gtk.Menu()
+            for child in self.menubar.get_children():
+                child.reparent(menu)
+            self.win.set_menu(menu)
+            self.menubar.destroy()
+       
         win.show_all()
 
         self.control.signal()
@@ -1431,6 +1448,7 @@ class PuzzleWindow:
     def state_event(self, w, event):
         state = int(event.new_window_state)
         self.maximized = (state & gtk.gdk.WINDOW_STATE_MAXIMIZED) <> 0
+        self.fullscreen = (state & gtk.gdk.WINDOW_STATE_FULLSCREEN) <> 0
 
     def resize_window(self, widget, allocation):
         if not self.maximized:
@@ -1677,6 +1695,11 @@ class PuzzleWindow:
         elif name == 'BackSpace': c.back_space()
         elif name == 'Return' or name == 'Tab': c.next_word(1)
         elif name == 'ISO_Left_Tab': c.next_word(-1)
+        elif name == 'F6':
+            if self.fullscreen:
+                self.win.unfullscreen()
+            else:
+                self.win.fullscreen()
         else: return False
 
         return True
@@ -1714,11 +1737,15 @@ class PuzzleWindow:
             if self.default_loc: dlg.set_filename(self.default_loc + '/')
             dlg.show()
         else:
-            dlg = gtk.FileChooserDialog("Open...",
-                                        None,
-                                        gtk.FILE_CHOOSER_ACTION_OPEN,
-                                        (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                         gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+            if has_hildon:
+                dlg = hildon.FileChooserDialog(self.win,
+                                               gtk.FILE_CHOOSER_ACTION_OPEN)
+            else:
+                dlg = gtk.FileChooserDialog("Open...",
+                                            None,
+                                            gtk.FILE_CHOOSER_ACTION_OPEN,
+                                            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                             gtk.STOCK_OPEN, gtk.RESPONSE_OK))
             dlg.set_default_response(gtk.RESPONSE_OK)
             if self.default_loc: dlg.set_current_folder(self.default_loc)
 
@@ -1741,11 +1768,15 @@ class PuzzleWindow:
             if self.default_loc: dlg.set_filename(self.default_loc + '/')
             dlg.show()
         else:
-            dlg = gtk.FileChooserDialog("Save As...",
-                                        None,
-                                        gtk.FILE_CHOOSER_ACTION_SAVE,
-                                        (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                         gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+            if has_hildon:
+                dlg = hildon.FileChooserDialog(self.win,
+                                               gtk.FILE_CHOOSER_ACTION_SAVE)
+            else:
+                dlg = gtk.FileChooserDialog("Save As...",
+                                            None,
+                                            gtk.FILE_CHOOSER_ACTION_SAVE,
+                                            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                             gtk.STOCK_SAVE, gtk.RESPONSE_OK))
             dlg.set_default_response(gtk.RESPONSE_OK)
             if self.default_loc: dlg.set_current_folder(self.default_loc)
 
