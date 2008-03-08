@@ -1,0 +1,4 @@
+debian/xword.desktop usr/share/applications
+*.png usr/share/games/xword
+xword usr/games
+debian/xword.1 usr/share/man/man1
