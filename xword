@@ -1,34 +1,38 @@
 #!/usr/bin/python
  
-# Copyright (c) 2005-2006,
-#   Bill McCloskey    <bill.mccloskey@gmail.com>
-# All rights reserved.
+__version__ = "1.0"
 
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+__license__ = """
+Copyright (c) 2005-2006,
+  Bill McCloskey    <bill.mccloskey@gmail.com>
+All rights reserved.
 
-# 1. Redistributions of source code must retain the above copyright notice,
-# this list of conditions and the following disclaimer.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
 
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-# this list of conditions and the following disclaimer in the documentation
-# and/or other materials provided with the distribution.
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-# 3. The names of the contributors may not be used to endorse or promote
-# products derived from this software without specific prior written
-# permission.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+3. The names of the contributors may not be used to endorse or promote
+products derived from this software without specific prior written
+permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+"""
 
 import pygtk
 pygtk.require('2.0')
@@ -37,18 +41,18 @@ import gtk.gdk
 import gobject
 
 try:
+    import hildon
+    has_hildon = True
+except:
+    has_hildon = False
+    
+try:
     import gnomeprint
     import gnomeprint.ui
     has_print = True
 except:
     has_print = False
 
-try:
-    import hildon
-    has_hildon = True
-except:
-    has_hildon = False
-    
 import pango
 import sys
 import time
@@ -57,11 +61,12 @@ import md5
 import pickle
 import ConfigParser
 
-HOME_PATH = '/usr/share/games/xword'
+HOME_PATH = '/usr/share/xword'
 CHECK_ICON = HOME_PATH + '/crossword-check.png'
 CHECK_ALL_ICON = HOME_PATH + '/crossword-check-all.png'
 SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
 TIMER_ICON = HOME_PATH + '/crossword-clock.png'
+ABOUT_ICON = HOME_PATH + '/xword-logo2.png'
 
 MIN_BOX_SIZE = 24
 
@@ -1183,6 +1188,7 @@ class PuzzleWindow:
         self.fullscreen = False
         self.positions = layouts[self.layout][1]
         self.default_loc = None
+        self.last_file = None
 
         title = 'Crossword Puzzle'
         if self.puzzle: title = 'Crossword Puzzle - %s' % self.puzzle.title
@@ -1201,29 +1207,38 @@ class PuzzleWindow:
 
         win.resize(self.window_size[0], self.window_size[1])
         if self.maximized: win.maximize()
-        
-        vbox = gtk.VBox()
-        win.add(vbox)
-        vbox = vbox
+
+        if has_hildon:
+            box = gtk.HBox()
+        else:
+            box = gtk.VBox()
+        win.add(box)
+        box = box
 
         self.cur_layout = None
 
         self.menubar = self.create_menubar()
         self.toolbar = self.create_toolbar()
-        vbox.pack_start(self.menubar, False, False, 0)
-        vbox.pack_start(self.toolbar, False, False, 0)
+        box.pack_start(self.menubar, False, False, 0)
+        box.pack_start(self.toolbar, False, False, 0)
 
         self.create_widgets()
         self.setup_controller()
 
         self.vbox = gtk.VBox()
-        vbox.pack_start(self.vbox, True, True, 0)
+        box.pack_start(self.vbox, True, True, 0)
 
         self.cur_layout = self.generate_layout(self.positions)
         self.vbox.pack_start(self.cur_layout, True, True, 0)
 
         self.status_bar = gtk.Statusbar()
-        vbox.pack_start(self.status_bar, False, False, 0)
+        if has_hildon:
+            self.status_bar.set_has_resize_grip(False)
+            toolitem = gtk.ToolItem()
+            toolitem.add(self.status_bar)
+            self.toolbar.insert(toolitem, -1)
+        else:
+            box.pack_start(self.status_bar, False, False, 0)
 
         gobject.timeout_add(500, self.idle_event)
         win.connect('key-press-event', self.key_event)
@@ -1242,11 +1257,15 @@ class PuzzleWindow:
         self.control.signal()
         self.puzzle_widget.area.grab_focus()
 
+        if self.last_file: self.do_open_file(self.last_file)
+
     def enable_controls(self, enabled):
         def enable(w): w.set_property('sensitive', enabled)
         
         enable(self.menu_items['save'])
-        enable(self.menu_items['print'])
+        enable(self.menu_items['properties'])
+        if has_print:
+            enable(self.menu_items['print'])
         enable(self.toolbar_items['Check Word'])
         enable(self.toolbar_items['Check Puzzle'])
         enable(self.toolbar_items['Solve Word'])
@@ -1261,13 +1280,14 @@ class PuzzleWindow:
         self.control.connect('check-word-result', self.check_result)
         self.control.connect('check-puzzle-result', self.check_result)
 
-    def do_open_file(self, fname):
+    def do_open_file(self, fname, no_load = False):
         if self.clock_running:
             self.clock_button.set_active(False)
         
         if self.puzzle: self.write_puzzle()
 
-        self.set_puzzle(Puzzle(fname))
+        self.set_puzzle(Puzzle(fname), no_load)
+        self.last_file = fname
         self.control = PuzzleController(self.puzzle)
         self.setup_controller()
         self.clue_widget.set_controller(self.control)
@@ -1280,7 +1300,7 @@ class PuzzleWindow:
         self.idle_event()
 
     def do_save_file(self, fname):
-	self.default_loc = os.path.dirname(fname)
+        self.default_loc = os.path.dirname(fname)
         self.puzzle.save(fname)
 
     def get_puzzle_file(self, puzzle):
@@ -1289,6 +1309,9 @@ class PuzzleWindow:
         except OSError: pass
 
         return dir + '/' + puzzle.hashcode()
+
+    def clear_puzzle(self):
+        if self.last_file: self.do_open_file(self.last_file, True)
 
     def load_puzzle(self, fname, f):
         pp = PersistentPuzzle()
@@ -1304,7 +1327,7 @@ class PuzzleWindow:
 
         f.close()
 
-    def set_puzzle(self, puzzle):
+    def set_puzzle(self, puzzle, no_load = False):
         self.clock_time = 0.0
 
         self.puzzle = puzzle
@@ -1318,7 +1341,9 @@ class PuzzleWindow:
         opts = ['Start Over', 'Continue']
         msg = ('This puzzle has been opened before. Would you like to'
                + ' continue where you left off?')
-        if self.ask(msg, opts) == 1:
+        if no_load:
+            return;
+        if has_hildon or self.ask(msg, opts) == 1:
             self.load_puzzle(fname, f)
 
     def write_puzzle(self):
@@ -1367,6 +1392,66 @@ class PuzzleWindow:
         dialog.destroy()
 
         return r
+
+    def show_properties(self):
+        show_props = gtk.Dialog('Properties', self.win)
+        show_props.set_has_separator(False)
+        show_props.set_resizable(False)
+        vbox_left = gtk.VBox()
+        title = gtk.Label('Title:')
+        title.set_alignment(1, 1)
+        author = gtk.Label('Author:')
+        author.set_alignment(1, 1)
+        copyright = gtk.Label('Copyright:')
+        copyright.set_alignment(1, 1)
+        vbox_left.pack_start(title, False, False, 1)
+        vbox_left.pack_start(author, False, False, 1)
+        vbox_left.pack_start(copyright, False, False, 1)
+        vbox_right = gtk.VBox()
+        title2 = gtk.Label(self.puzzle.title)
+        author2 = gtk.Label(self.puzzle.author)
+        copyright2 = gtk.Label(self.puzzle.copyright)
+        vbox_right.pack_start(title2, False, False, 1)
+        vbox_right.pack_start(author2, False, False, 1)
+        vbox_right.pack_start(copyright2, False, False, 1)
+        hbox = gtk.HBox()
+        hbox.pack_start(vbox_left, False, False, 2)
+        hbox.pack_start(vbox_right, False, False, 2)
+        show_props.vbox.pack_start(hbox, False, False, 15)
+        show_props.vbox.show_all()
+        close_button = show_props.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
+        close_button.grab_focus()
+        show_props.run()
+        show_props.destroy()
+
+    def show_about(self):
+        # Help > About
+        self.about_dialog = gtk.AboutDialog()
+        try:
+            self.about_dialog.set_transient_for(self.win)
+            self.about_dialog.set_modal(True)
+        except:
+            pass
+        self.about_dialog.set_name('Xword')
+        self.about_dialog.set_version(__version__)
+        self.about_dialog.set_comments('The Crossword puzzle player.')
+        self.about_dialog.set_license(__license__)
+        self.about_dialog.set_authors(['Bill McCloskey <bill.mccloskey@gmail.com>\nMaemo Port: Bradley Bell <bradleyb@u.washington.edu>'])
+#        gtk.about_dialog_set_url_hook(self.show_website, "http://xword.garage.maemo.org")
+        self.about_dialog.set_website_label("http://xword.garage.maemo.org")
+        icon_path = ABOUT_ICON
+        try:
+            icon_pixbuf = gtk.gdk.pixbuf_new_from_file(icon_path)
+            self.about_dialog.set_logo(icon_pixbuf)
+        except:
+            pass
+        self.about_dialog.connect('response', self.close_about)
+        self.about_dialog.connect('delete_event', self.close_about)
+        self.about_dialog.show_all()
+
+    def close_about(self, event, data=None):
+        self.about_dialog.hide()
+        return True
 
     def create_widgets(self):
         self.widgets = {}
@@ -1463,7 +1548,7 @@ class PuzzleWindow:
             item = klass(**args)
             if active: item.set_active(True)
             item.connect('activate', self.menu_selected, action)
-            if key:
+            if not has_hildon and key:
                 item.add_accelerator('activate', accel, ord(key),
                                      gtk.gdk.CONTROL_MASK, gtk.ACCEL_VISIBLE)
             return item
@@ -1490,10 +1575,23 @@ class PuzzleWindow:
 
         append(menu, 'open', create_menu_item('Open', MENU_OPEN, 'O'))
         append(menu, 'save', create_menu_item('Save', MENU_SAVE, 'S'))
-        append(menu, 'print', create_menu_item('Print...', MENU_PRINT, 'P'))
+        if has_print:
+            append(menu, 'print', create_menu_item('Print...', MENU_PRINT, 'P'))
+        append(menu, 'properties', create_menu_item('Properties...', 'properties'))
         append(menu, '', gtk.SeparatorMenuItem())
         append(menu, 'close', create_menu_item('Close', MENU_CLOSE, 'W'))
         append(menu, 'quit', create_menu_item('Quit', MENU_QUIT, 'Q'))
+
+        puzzle_menu = gtk.MenuItem('Puzzle')
+        menubar.append(puzzle_menu)
+
+        menu=gtk.Menu()
+        puzzle_menu.set_submenu(menu)
+
+        append(menu, 'check_word', create_menu_item('Check Word', 'Check Word'))
+        append(menu, 'check_puzzle', create_menu_item('Check Puzzle', 'Check Puzzle'))
+        append(menu, 'solve_word', create_menu_item('Solve Word', 'Solve Word'))
+        append(menu, 'clear_puzzle', create_menu_item('Clear Puzzle', 'Clear Puzzle'))
 
         prefs_menu = gtk.MenuItem('Preferences')
         menubar.append(prefs_menu)
@@ -1519,6 +1617,14 @@ class PuzzleWindow:
             g = item
             i -= 1
 
+        help_menu = gtk.MenuItem('Help')
+        menubar.append(help_menu)
+
+        menu = gtk.Menu()
+        help_menu.set_submenu(menu)
+
+        append(menu, 'about', create_menu_item('About', 'about'))
+
         self.win.add_accel_group(accel)
         return menubar
 
@@ -1535,6 +1641,18 @@ class PuzzleWindow:
             self.save_file()
         elif action == MENU_PRINT:
             self.print_puzzle()
+        elif action == 'Check Word':
+            self.control.check_word()
+        elif action == 'Check Puzzle':
+            self.control.check_puzzle()
+        elif action == 'Solve Word':
+            self.control.solve_word()
+        elif action == 'Clear Puzzle':
+            self.clear_puzzle()
+        elif action == 'properties':
+            self.show_properties()
+        elif action == 'about':
+            self.show_about()
         elif action < 0:
             layout = -(action+1)
             if layout <> self.layout: self.set_layout(layout)
@@ -1585,10 +1703,15 @@ class PuzzleWindow:
         
         toolbar = gtk.Toolbar()
         toolbar.set_style(gtk.TOOLBAR_BOTH)
-        toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+        if has_hildon:
+            toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
+        else:
+            toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         self.toolbar = toolbar
 
-        self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
+        if not has_hildon:
+            self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
+        self.create_toolbar_item('Open', gtk.STOCK_OPEN, 'Open')
         self.create_toolbar_item('Check Word', CHECK_ICON,
                                  'Check a word')
         self.create_toolbar_item('Check Puzzle', CHECK_ALL_ICON,
@@ -1664,6 +1787,8 @@ class PuzzleWindow:
     def toolbar_event(self, widget, event):
         if event == 'Quit':
             self.exit()
+        elif event == 'Open':
+            self.open_file()
         elif event == 'Check Word':
             self.control.check_word()
         elif event == 'Check Puzzle':
@@ -1722,7 +1847,8 @@ class PuzzleWindow:
         if correct: msg = 'No mistakes found'
         else: msg = 'Incorrect.'
 
-        self.status_bar.push(self.status_bar.get_context_id('stat'), msg)
+        if not has_hildon:
+            self.status_bar.push(self.status_bar.get_context_id('stat'), msg)
 
     def open_file(self):
         def open_cb(w, open_dlg):
@@ -1810,6 +1936,8 @@ class PuzzleWindow:
                 self.maximized = eval(c.get('options', 'maximized'))
             if c.has_option('options', 'default_loc'):
                 self.default_loc = eval(c.get('options', 'default_loc'))
+            if c.has_option('options', 'last_file'):
+                self.last_file = eval(c.get('options', 'last_file'))
 
     def write_config(self):
         c = ConfigParser.ConfigParser()
@@ -1820,6 +1948,7 @@ class PuzzleWindow:
         c.set('options', 'window_size', repr(self.window_size))
         c.set('options', 'maximized', repr(self.maximized))
         c.set('options', 'default_loc', repr(self.default_loc))
+        c.set('options', 'last_file', repr(self.last_file))
         c.write(file(os.path.expanduser('~/.crossword.cfg'), 'w'))
 
 if __name__ == '__main__':
