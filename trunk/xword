@@ -1,5 +1,5 @@
 #!/usr/bin/python
- 
+
 __version__ = "1.0"
 
 __license__ = """
@@ -45,7 +45,7 @@ try:
     has_hildon = True
 except:
     has_hildon = False
-    
+
 try:
     import gnomeprint
     import gnomeprint.ui
@@ -1805,8 +1805,11 @@ class PuzzleWindow:
     def button_event(self, widget, event, puzzle):
         if event.type is gtk.gdk.BUTTON_PRESS:
             (x, y) = puzzle.translate_position(event.x, event.y)
-            if event.button is 3: self.control.switch_mode()
-            self.control.move_to(x, y)
+            if x == self.control.x and y == self.control.y:
+                self.control.switch_mode()
+            else:
+                if event.button is 3: self.control.switch_mode()
+                self.control.move_to(x, y)
 
     def key_event(self, item, event):
         name = gtk.gdk.keyval_name(event.keyval)
