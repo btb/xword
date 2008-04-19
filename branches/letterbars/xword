@@ -1341,7 +1341,7 @@ class PuzzleWindow:
 
         try: f = file(fname, 'r')
         except IOError: return
-        
+
         if not start_over:
             self.load_puzzle(fname, f)
 
@@ -1862,8 +1862,8 @@ class PuzzleWindow:
                 self.win.unfullscreen()
             else:
                 self.win.fullscreen()
-        elif name == 'F7': c.next_word(-1)
-        elif name == 'F8': c.next_word(1)
+        elif name == 'F7': c.next_word(1)
+        elif name == 'F8': c.next_word(-1)
         else: return False
 
         return True
