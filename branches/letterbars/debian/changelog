@@ -1,0 +1,13 @@
+xword (1.0-1.1) unstable; urgency=low
+
+  * Port to maemo
+
+ -- Bradley Bell <bradleyb@u.washington.edu>  Tue, 11 Mar 2008 00:19:18 -0700
+
+xword (1.0-1) unstable; urgency=low
+
+  * Initial release (Closes: #440765)
+  * Adjusted expected icon locations in source
+	
+ -- John Sullivan <john@wjsullivan.net>  Mon, 03 Dec 2007 11:18:10 -0400
+

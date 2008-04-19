@@ -1,0 +1,4 @@
+debian/xword.desktop usr/share/applications/hildon/
+*.png usr/share/xword
+xword usr/bin
+debian/xword.1 usr/share/man/man1
