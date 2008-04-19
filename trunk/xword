@@ -1208,10 +1208,7 @@ class PuzzleWindow:
         win.resize(self.window_size[0], self.window_size[1])
         if self.maximized: win.maximize()
 
-        if has_hildon:
-            box = gtk.HBox()
-        else:
-            box = gtk.VBox()
+        box = gtk.HBox()
         win.add(box)
         box = box
 
@@ -1219,7 +1216,6 @@ class PuzzleWindow:
 
         self.menubar = self.create_menubar()
         self.toolbar = self.create_toolbar()
-        box.pack_start(self.menubar, False, False, 0)
         box.pack_start(self.toolbar, False, False, 0)
 
         self.create_widgets()
@@ -1232,13 +1228,12 @@ class PuzzleWindow:
         self.vbox.pack_start(self.cur_layout, True, True, 0)
 
         self.status_bar = gtk.Statusbar()
-        if has_hildon:
-            self.status_bar.set_has_resize_grip(False)
-            toolitem = gtk.ToolItem()
-            toolitem.add(self.status_bar)
-            self.toolbar.insert(toolitem, -1)
-        else:
-            box.pack_start(self.status_bar, False, False, 0)
+
+        #Put "status bar" into toolbar since it's mostly just wasting space
+        self.status_bar.set_has_resize_grip(False)
+        toolitem = gtk.ToolItem()
+        toolitem.add(self.status_bar)
+        self.toolbar.insert(toolitem, -1)
 
         gobject.timeout_add(500, self.idle_event)
         win.connect('key-press-event', self.key_event)
@@ -1251,7 +1246,11 @@ class PuzzleWindow:
                 child.reparent(menu)
             self.win.set_menu(menu)
             self.menubar.destroy()
-       
+        else:
+            toolitem = gtk.ToolItem()
+            toolitem.add(self.menubar)
+            self.toolbar.insert(toolitem, 0)
+
         win.show_all()
 
         self.control.signal()
@@ -1338,13 +1337,9 @@ class PuzzleWindow:
         try: f = file(fname, 'r')
         except IOError: return
         
-        opts = ['Start Over', 'Continue']
-        msg = ('This puzzle has been opened before. Would you like to'
-               + ' continue where you left off?')
         if no_load:
             return;
-        if has_hildon or self.ask(msg, opts) == 1:
-            self.load_puzzle(fname, f)
+        self.load_puzzle(fname, f)
 
     def write_puzzle(self):
         if not self.puzzle: return
@@ -1703,14 +1698,10 @@ class PuzzleWindow:
         
         toolbar = gtk.Toolbar()
         toolbar.set_style(gtk.TOOLBAR_BOTH)
-        if has_hildon:
-            toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
-        else:
-            toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+        toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
         self.toolbar = toolbar
 
-        if not has_hildon:
-            self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
+        #self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
         self.create_toolbar_item('Open', gtk.STOCK_OPEN, 'Open')
         self.create_toolbar_item('Check Word', CHECK_ICON,
                                  'Check a word')
