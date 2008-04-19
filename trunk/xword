@@ -68,7 +68,7 @@ SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
 TIMER_ICON = HOME_PATH + '/crossword-clock.png'
 ABOUT_ICON = HOME_PATH + '/xword-logo2.png'
 
-MIN_BOX_SIZE = 24
+MIN_BOX_SIZE = 18
 
 ACROSS = 0
 DOWN = 1
