@@ -1279,13 +1279,13 @@ class PuzzleWindow:
         self.control.connect('check-word-result', self.check_result)
         self.control.connect('check-puzzle-result', self.check_result)
 
-    def do_open_file(self, fname, continue = True):
+    def do_open_file(self, fname, start_over = False):
         if self.clock_running:
             self.clock_button.set_active(False)
         
         if self.puzzle: self.write_puzzle()
 
-        self.set_puzzle(Puzzle(fname), continue)
+        self.set_puzzle(Puzzle(fname), start_over)
         self.last_file = fname
         self.control = PuzzleController(self.puzzle)
         self.setup_controller()
@@ -1310,7 +1310,7 @@ class PuzzleWindow:
         return dir + '/' + puzzle.hashcode()
 
     def clear_puzzle(self):
-        if self.last_file: self.do_open_file(self.last_file, False)
+        if self.last_file: self.do_open_file(self.last_file, True)
 
     def load_puzzle(self, fname, f):
         pp = PersistentPuzzle()
@@ -1326,7 +1326,7 @@ class PuzzleWindow:
 
         f.close()
 
-    def set_puzzle(self, puzzle, continue = True):
+    def set_puzzle(self, puzzle, start_over = False):
         self.clock_time = 0.0
 
         self.puzzle = puzzle
@@ -1337,7 +1337,7 @@ class PuzzleWindow:
         try: f = file(fname, 'r')
         except IOError: return
         
-        if continue:
+        if not start_over:
             self.load_puzzle(fname, f)
 
     def write_puzzle(self):
