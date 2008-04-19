@@ -1218,6 +1218,11 @@ class PuzzleWindow:
         self.toolbar = self.create_toolbar()
         box.pack_start(self.toolbar, False, False, 0)
 
+        self.letterbar = self.create_letterbar1()
+        box.pack_start(self.letterbar, False, False, 0)
+        self.letterbar = self.create_letterbar2()
+        box.pack_start(self.letterbar, False, False, 0)
+
         self.create_widgets()
         self.setup_controller()
 
@@ -1717,6 +1722,38 @@ class PuzzleWindow:
 
         return toolbar
 
+    def create_letterbar1(self):
+        letterbar = gtk.Toolbar()
+        letterbar.set_style(gtk.TOOLBAR_TEXT)
+        letterbar.set_orientation(gtk.ORIENTATION_VERTICAL)
+        self.letterbar = letterbar
+
+        for i in range(13):
+            letter = chr(ord('A') + i)
+            item = gtk.ToolButton(None, letter)
+            item.connect('clicked', self.letterbar_event, letter)
+            letterbar.insert(item, -1)
+
+        return letterbar
+
+    def create_letterbar2(self):
+        letterbar = gtk.Toolbar()
+        letterbar.set_style(gtk.TOOLBAR_TEXT)
+        letterbar.set_orientation(gtk.ORIENTATION_VERTICAL)
+        self.letterbar = letterbar
+
+        for i in range(13):
+            letter = chr(ord('N') + i)
+            item = gtk.ToolButton(None, letter)
+            item.connect('clicked', self.letterbar_event, letter)
+            letterbar.insert(item, -1)
+
+        item = gtk.ToolButton(None, '<')
+        item.connect('clicked', self.letterbar_event, '<')
+        letterbar.insert(item, -1)
+
+        return letterbar
+
     def create_list(self, mode):
         if mode == ACROSS: label = 'Across'
         else: label = 'Down'
@@ -1792,6 +1829,13 @@ class PuzzleWindow:
                 self.clock_start = time.time()
             else:
                 self.clock_time += (time.time() - self.clock_start)
+
+    def letterbar_event(self, widget, event):
+        c = self.control
+        if event == '<':
+            c.back_space()
+        else:
+            c.input_char(self.skip_filled, event)
 
     def button_event(self, widget, event, puzzle):
         if event.type is gtk.gdk.BUTTON_PRESS:
