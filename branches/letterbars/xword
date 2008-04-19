@@ -1713,6 +1713,8 @@ class PuzzleWindow:
                                  'Check all words in the puzzle')
         self.create_toolbar_item('Solve Word', SOLVE_ICON,
                                  'Cheat to get a word')
+        self.create_toolbar_item('Backspace', gtk.STOCK_CLEAR, 'Backspace')
+
         self.create_separator_toolitem()
         b = self.create_toolbar_item('', TIMER_ICON,
                                      'Enable or disable the clock', True)
@@ -1746,10 +1748,6 @@ class PuzzleWindow:
             item = gtk.ToolButton(None, letter)
             item.connect('clicked', self.letterbar_event, letter)
             letterbar.insert(item, -1)
-
-        item = gtk.ToolButton(None, '<')
-        item.connect('clicked', self.letterbar_event, '<')
-        letterbar.insert(item, -1)
 
         return letterbar
 
@@ -1822,6 +1820,8 @@ class PuzzleWindow:
             self.control.check_puzzle()
         elif event == 'Solve Word':
             self.control.solve_word()
+        elif event == 'Backspace':
+            self.control.back_space()
         else: # it must be the clock
             self.clock_running = not self.clock_running
             if self.clock_running:
@@ -1831,10 +1831,7 @@ class PuzzleWindow:
 
     def letterbar_event(self, widget, event):
         c = self.control
-        if event == '<':
-            c.back_space()
-        else:
-            c.input_char(self.skip_filled, event)
+        c.input_char(self.skip_filled, event)
 
     def button_event(self, widget, event, puzzle):
         if event.type is gtk.gdk.BUTTON_PRESS:
