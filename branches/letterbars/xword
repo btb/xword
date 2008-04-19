@@ -1284,13 +1284,13 @@ class PuzzleWindow:
         self.control.connect('check-word-result', self.check_result)
         self.control.connect('check-puzzle-result', self.check_result)
 
-    def do_open_file(self, fname, no_load = False):
+    def do_open_file(self, fname, start_over = False):
         if self.clock_running:
             self.clock_button.set_active(False)
         
         if self.puzzle: self.write_puzzle()
 
-        self.set_puzzle(Puzzle(fname), no_load)
+        self.set_puzzle(Puzzle(fname), start_over)
         self.last_file = fname
         self.control = PuzzleController(self.puzzle)
         self.setup_controller()
@@ -1331,7 +1331,7 @@ class PuzzleWindow:
 
         f.close()
 
-    def set_puzzle(self, puzzle, no_load = False):
+    def set_puzzle(self, puzzle, start_over = False):
         self.clock_time = 0.0
 
         self.puzzle = puzzle
@@ -1342,9 +1342,8 @@ class PuzzleWindow:
         try: f = file(fname, 'r')
         except IOError: return
         
-        if no_load:
-            return;
-        self.load_puzzle(fname, f)
+        if not start_over:
+            self.load_puzzle(fname, f)
 
     def write_puzzle(self):
         if not self.puzzle: return
@@ -1863,6 +1862,8 @@ class PuzzleWindow:
                 self.win.unfullscreen()
             else:
                 self.win.fullscreen()
+        elif name == 'F7': c.next_word(-1)
+        elif name == 'F8': c.next_word(1)
         else: return False
 
         return True
