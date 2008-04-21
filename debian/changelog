@@ -1,3 +1,36 @@
+xword (1.0.4) stable; urgency=low
+
+  * F7,F8 (-/+ buttons on N8x0) now do previous / next word
+  * Fixed scroll window bug where clicking on a cell when the puzzle 
+    window is scrolled results in the incorrect cell being selected
+  * Uploaded all of the icon files to the garage.maemo.org svn
+
+ -- Terrence Fleury <terrencegf@gmail.com> Fri, 18 Apr 2008 11:28:00 -0500
+
+xword (1.0.3) stable; urgency=low
+
+  * Removed the xword.sh script
+  * Added a new Preference menu option to launch xkbd (if present)
+
+ -- Terrence Fleury <terrencegf@gmail.com> Fri, 18 Apr 2008 11:28:00 -0500
+
+xword (1.0.2) unstable; urgency=low
+
+  * Return/D-pad center button now toggles horizontal / vertical entry
+  * The "check" buttons pop up a message window on the N8x0 since the
+    status bar doesn't seem to work
+  * Created a script xword.sh which checks for /usr/bin/xkbd and launches
+    a special xword.xkbd layout file if present
+
+ -- Terrence Fleury <terrencegf@gmail.com> Fri, 18 Apr 2008 00:21:00 -0500
+
+xword (1.0.1) unstable; urgency=low
+
+  * Initial packaging to a .deb
+  * Created a program icon suitable for the Nokia N8x0
+
+ -- Terrence Fleury <terrencegf@gmail.com> Thu, 17 Apr 2008 17:41:00 -0500
+
 xword (1.0-1.1) unstable; urgency=low
 
   * Port to maemo
