@@ -68,7 +68,7 @@ SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
 TIMER_ICON = HOME_PATH + '/crossword-clock.png'
 ABOUT_ICON = HOME_PATH + '/xword-logo2.png'
 
-MIN_BOX_SIZE = 18
+MIN_BOX_SIZE = 20
 
 ACROSS = 0
 DOWN = 1
@@ -1269,7 +1269,8 @@ class PuzzleWindow:
         self.control.signal()
         self.puzzle_widget.area.grab_focus()
 
-        if self.last_file: self.do_open_file(self.last_file)
+        if self.last_file and os.path.exists(self.last_file): 
+            self.do_open_file(self.last_file)
 
     def enable_controls(self, enabled):
         def enable(w): w.set_property('sensitive', enabled)
