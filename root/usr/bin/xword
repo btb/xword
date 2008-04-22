@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 __license__ = """
 Copyright (c) 2005-2006,
@@ -68,7 +68,8 @@ SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
 TIMER_ICON = HOME_PATH + '/crossword-clock.png'
 ABOUT_ICON = HOME_PATH + '/xword-logo2.png'
 
-MIN_BOX_SIZE = 20
+MIN_BOX_SIZE = 12 
+MAX_BOX_SIZE = 40
 
 ACROSS = 0
 DOWN = 1
@@ -742,9 +743,10 @@ class PuzzlePrinter:
         dialog.show()
 
 class PuzzleWidget:
-    def __init__(self, puzzle, control):
+    def __init__(self, puzzle, control, min_box_size=20):
         self.puzzle = puzzle
         self.control = control
+        self.min_box_size = min_box_size
         
         self.area = gtk.DrawingArea()
         self.pango = self.area.create_pango_layout('')
@@ -764,11 +766,11 @@ class PuzzleWidget:
         self.control = control
 
         if puzzle:
-            width = puzzle.width * MIN_BOX_SIZE
-            height = puzzle.height * MIN_BOX_SIZE
+            width = puzzle.width * self.min_box_size
+            height = puzzle.height * self.min_box_size
             self.area.set_size_request(width, height)
         else:
-            self.box_size = MIN_BOX_SIZE
+            self.box_size = self.min_box_size
 
         self.area.queue_draw_area(0, 0, 32768, 32768)
 
@@ -905,7 +907,7 @@ class ClueWidget:
         self.control = control
 
         width = 0
-        height = MIN_BOX_SIZE
+        height = 20
 
         self.area = gtk.DrawingArea()
         self.pango = self.area.create_pango_layout('')
@@ -1192,13 +1194,14 @@ class PuzzleWindow:
 
         self.skip_filled = False
         self.layout = 0
-        self.toolbar_layout = 0
+        self.toolbar_layout = 4
         self.window_size = (800, 480)
         self.maximized = False
         self.fullscreen = False
         self.positions = layouts[self.layout][1]
         self.default_loc = None
         self.last_file = None
+        self.min_box_size = 20
 
         title = 'Crossword Puzzle'
         if self.puzzle: title = 'Crossword Puzzle - %s' % self.puzzle.title
@@ -1464,6 +1467,29 @@ class PuzzleWindow:
         self.about_dialog.hide()
         return True
 
+    def prompt_min_box_size(self):
+        dialog = gtk.Dialog(None, self.win,
+                     gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                     (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+                      gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+        box = gtk.HBox();
+        dialog.vbox.pack_start(box)
+        label = gtk.Label("Minimum Box Size:");
+        box.pack_start(label)
+        adjust = gtk.Adjustment(self.min_box_size,
+            MIN_BOX_SIZE,MAX_BOX_SIZE,2,0,0)
+        spin = gtk.SpinButton(adjust)
+        box.pack_start(spin)
+        dialog.show_all();
+        r = dialog.run()
+        if r == gtk.RESPONSE_ACCEPT:
+            spinval = spin.get_value_as_int()
+            if spinval != self.min_box_size:
+                self.min_box_size = spinval
+                self.puzzle_widget.min_box_size = spinval
+                self.puzzle_widget.set_puzzle(self.puzzle, self.control)
+        dialog.destroy()
+
     def create_widgets(self):
         self.widgets = {}
 
@@ -1473,7 +1499,7 @@ class PuzzleWindow:
         vbox.pack_start(clue.widget, False, False, 0)
         self.clue_widget = clue
 
-        puzzle = PuzzleWidget(self.puzzle, self.control)
+        puzzle = PuzzleWidget(self.puzzle, self.control, self.min_box_size)
         puzzle.area.connect('key-press-event', self.puzzle_key_event)
         vbox.pack_start(puzzle.widget, True, True, 0)
         self.puzzle_widget = puzzle
@@ -1635,6 +1661,9 @@ class PuzzleWindow:
                create_menu_item('Skip Filled', MENU_SKIP, None,
                                 gtk.CheckMenuItem, self.skip_filled))
 
+        append(menu, 'min_box_size', 
+            create_menu_item('Set Min Box Size', 'min_box_size'))
+
         item = create_menu_item('Toolbar Layout', 0)
         append(menu, 'toolbar', item)
 
@@ -1701,6 +1730,8 @@ class PuzzleWindow:
             self.show_properties()
         elif action == 'about':
             self.show_about()
+        elif action == 'min_box_size':
+            self.prompt_min_box_size()
         elif action < -10:
             toolbar_layout = -(action+11)
             if toolbar_layout <> self.toolbar_layout:
@@ -2044,6 +2075,8 @@ class PuzzleWindow:
                 self.default_loc = eval(c.get('options', 'default_loc'))
             if c.has_option('options', 'last_file'):
                 self.last_file = eval(c.get('options', 'last_file'))
+            if c.has_option('options', 'min_box_size'):
+                self.min_box_size = c.getint('options', 'min_box_size')
 
     def write_config(self):
         c = ConfigParser.ConfigParser()
@@ -2056,6 +2089,7 @@ class PuzzleWindow:
         c.set('options', 'maximized', repr(self.maximized))
         c.set('options', 'default_loc', repr(self.default_loc))
         c.set('options', 'last_file', repr(self.last_file))
+        c.set('options', 'min_box_size', self.min_box_size)
         c.write(file(os.path.expanduser('~/.crossword.cfg'), 'w'))
 
 
