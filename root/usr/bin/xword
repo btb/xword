@@ -1352,11 +1352,7 @@ class PuzzleWindow:
         except IOError: return
 
         if not start_over:
-            opts = ['Start Over', 'Continue']
-            msg = ('This puzzle has been opened before. Would you like to ' +
-                   'continue where you left off?')
-            if has_hildon or self.ask(msg, opts) == 1:
-                self.load_puzzle(fname, f)
+            self.load_puzzle(fname, f)
 
     def write_puzzle(self):
         if not self.puzzle: return
@@ -1762,8 +1758,7 @@ class PuzzleWindow:
         toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
         self.toolbar = toolbar
 
-        if not has_hildon:
-            self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
+        self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
         self.create_toolbar_item('Open', gtk.STOCK_OPEN, 'Open')
         self.create_toolbar_item('Check Word', CHECK_ICON,
                                  'Check a word')
