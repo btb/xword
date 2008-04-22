@@ -1193,7 +1193,7 @@ class PuzzleWindow:
         self.skip_filled = False
         self.layout = 0
         self.toolbar_layout = 0
-        self.window_size = (900, 600)
+        self.window_size = (800, 480)
         self.maximized = False
         self.fullscreen = False
         self.positions = layouts[self.layout][1]
