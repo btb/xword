@@ -1,8 +1,22 @@
+xword (1.0.5) stable; urgency=low
+
+  * Added new Preference menu option to set the minimum box size (between
+    12 and 40 inclusive)
+  * Added two new buttons on the keyboard toolbar for "check word" and
+    "solve word"
+
+ -- Terrence Fleury <terrencegf@gmail.com> Tue, 22, Apr 2008 17:05:00 -0500
+
 xword (1.0.4) stable; urgency=low
 
+  * Replaced xkbd with a built-in keyboard.  The new keyboard is actually 
+    several toolbars.  The user can select to view the keyboard on the
+    Left/Right, the old check buttons toolbar on the Left/Right, or neither
   * F7,F8 (-/+ buttons on N8x0) now do previous / next word
+  * Escape does "check word"
   * Fixed scroll window bug where clicking on a cell when the puzzle 
     window is scrolled results in the incorrect cell being selected
+  * Clicking on th the current "red' cell changes direction
   * Uploaded all of the icon files to the garage.maemo.org svn
 
  -- Terrence Fleury <terrencegf@gmail.com> Fri, 18 Apr 2008 11:28:00 -0500
