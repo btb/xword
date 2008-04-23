@@ -908,7 +908,7 @@ class ClueWidget:
         self.control = control
 
         width = 0
-        height = 20
+        height = 22
 
         self.area = gtk.DrawingArea()
         self.pango = self.area.create_pango_layout('')
