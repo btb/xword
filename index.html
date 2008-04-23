@@ -328,7 +328,10 @@
     <ol>
       <li>If you attempt to open a file that is NOT an Across Lite .puz
       file, the File Open dialog box will not go away requiring you to kill
-      the program (through some other mechanism).
+      the program (through some other mechanism).  Also, the bad file may be
+      written to your configuration settings file, preventing you from
+      running the program again.  To fix this, remove the
+      "<tt>.crossword.cfg</tt>" file in your home directory.
       </li>
       <li>If you attempt to open a .puz file containing Across Lite Notepad
       data, the file will open, but will not show the correct puzzle size.
