@@ -1,15 +1,353 @@
 <html>
-<head>
-<title>Xword</title>
-</head>
-<body>
-<p>
-Website creation in progress.  
-</p>
-<p>
-<a href="https://garage.maemo.org/projects/xword">Continue to the xword
-project page</a>
-</p>
-</body>
-</html>
+  <head>
+    <title>xword for maemo</title>
+  </head>
+  <body>
 
+    <div align="center">
+      <img src="xword.png" alt="Xword Logo"/>
+      <h3>xword - a crossword program for maemo</h3>
+      <a href="#about">about</a> | 
+      <a href="#installing">installing</a> | 
+      <a href="#running">running</a> | 
+      <a href="#desktop">desktop</a> | 
+      <a href="#bugs">bugs</a> 
+    </div>
+
+    <a name="about"><h1>about</h1></a>
+    <p>
+    xword is a crossword puzzle program for the Nokia Internet Tablet which
+    can read <a href="http://www.litsoft.com/">Across Lite</a> .puz files.
+    It is written in <a
+      href="http://www.python.org/">python</a> using <a
+      href="http://www.pygtk.org/">pyGTK</a>.  It is based on the <a
+      href="http://x-word.org/">original Xword program</a> written by Bill
+    McCloskey.  The NIT version fixes a few bugs in the original code and
+    adds some functionality (e.g. built-in keyboard) to make the
+    program more usable on the NIT.
+    </p>
+    <p>
+    Before you go any farther, you should be aware of the following
+    caveats.
+    <ul>
+      <li>The program is <b>sloooow</b>.  It is basically one very long
+      python script.  On the NIT, there is sometimes a one second delay
+      between input and screen update.  Fortunately, touchscreen inputs are
+      queued so that you don't have to wait for the screen to update before
+      entering the next letter.
+    </li>
+    <li>The program has been tested only on OS2008 (i.e. the N800 and N810).
+    The .deb requires ptyhon2.5 and python2.5-gtk2.  It is possible that the
+    program would run with 2.4 versions, but it has not been tested.
+    </li>
+    </ul>
+    </p>
+
+    <hr>
+
+    <a name="installing"><h1>installating xword</h1></a>
+    <p>
+    To install xword on your N8x0, you need to install python2.5 and
+    python2.5-gtk.  These are available in the <a
+      href="http://repository.maemo.org/extras/">maemo extras</a>
+    repository.  Go into the Application Manager, select the menu
+    "Tools-&gt;Application catalog..." and verify that "maemo Extras" is not
+    grayed out.  If it is, select "maemo Extras", click the "Edit" button,
+    and uncheck the "Disabled" checkbox.  Then click "OK", and then "Close".
+    Let the Applciation Manager reread the catalog list.
+    </p>
+
+    <p>
+    Now, <a href="https://garage.maemo.org/frs/?group_id=620">install the
+      latest vesion of the xword.deb file</a>.  If the program does not
+    automatically install, you may need to open an xterm and install
+    everything manually at root.  So SAVE the latest xword.deb to your NIT
+    and then run the following commands in a terminal.
+    </p>
+    <blockquote>
+      <code>
+        sudo gainroot<br/>
+        sudo apt-get install python2.5 python2.5-gtk2<br/>
+        dpkg -i /home/user/xword-x.x.x.deb
+      </code>
+    </blockquote>
+    <p>Be sure to change the "xword-x.x.x.deb" file to the correct file
+    name.
+    </p>
+
+    <hr/>
+
+    <a name="running"><h1>running xword</h1></a>
+
+    <p>
+    The xword program will appear in your program menu somewhere, probably
+    "Extras".  The first time you start xword, you will need to open a
+    ".puz" crossword puzzle.  The ".puz" format was created for <a
+      href="http://www.litsoft.com/across/alite/download.htm">Across
+      Lite</a>.  Puzzles in this format can be found around the net.  <a
+      href="http://www.nytimes.com/specials/puzzles/classic.puz">HERE</a> is
+    a free "classic" New York Times puzzle.
+    </p>
+    <p>
+    In general, tap the box you want to move to.  That box will appear in
+    red.  The rest of that word will appear in gray to indicate the
+    direction of the word.  The clue for that word will appear above the
+    puzzle.  Tap the box again to change word direction from horizontal to
+    vertical (or back).  Type in letters to fill in the word.  
+    </p>
+
+    <hr width="70%">
+
+    <h2>menus</h2>
+
+    <blockquote>
+
+    <p>
+    <b>File</b>
+    <blockquote>
+      <ul>
+        <li><b>Open</b> - Open a .puz file
+        </li>
+        <li><b>Save</b> - Save the state of the current puzzle.  This is
+        not strictly necessary since the state of the puzzle gets saved
+        automatically when you exit the program.
+        </li>
+        <li><b>Properties...</b> - Show the properties of the current
+        puzzle.  This includes the title, author, and copyright information.
+        </li>
+        <li><b>Close</b> - Close the current puzzle.
+        </li>
+        <li><b>Quit</b> - Exit the xword application.
+        </li>
+      </ul>
+    </blockquote>
+    </p>
+
+
+    <p>
+    <b>Puzzle</b>
+    <blockquote>
+      <ul>
+        <li><b>Check Word</b> - Check the current word for correctness.  If
+        the word is correct, you will be shown a popup window saying "No
+        mistakes found".  Otherwise, you will be shown a popup window saying
+        "Incorect." and the incorrect letters will be marked with a big "X"
+        through them as well as a small black triangle in the corner to keep
+        track of the letters you needed help with.
+        </li>
+        <li><b>Check Puzzle</b> - Perform "Check Word" on all currently
+        filled in words.  Thus, the puzzle does not need to be complete to
+        check it.
+        </li>
+        <li><b>Solve Word</b> - Fill in the correct letters for the current
+        word.  The letters that get filled in by the application will be
+        marked with a small red triangle in the corder to keep track of the
+        letters you needed help with.
+        </li>
+        <li><b>Clear Puzzle</b> - Completely clear the current puzzle and
+        start from scratch.
+        </li>
+      </ul>
+    </blockquote>
+    </p>
+
+    <p>
+    <b>Preferences</b>
+    <blockquote>
+      <ul>
+        <li><b>Skip Filled</b> - Toggle a checkmark for if you want to skip
+        boxes where you have already filled in the letter.  This can reduce
+        the number of letters you have to type in.
+        </li>
+        <li><b>Set Min Box Size</b> - Bring up a dialog allowing you to set
+        the minimum box size of each letter square.  The default size is 20
+        which allows a 21x21 puzzle to fit fullscreen without scrollbars.
+        You can set this value between 12 and 40 inclusive.
+        </li>
+        <li><b>Toolbar Layout</b> - Set the location of the "toolbar".  The
+        toolbar can be turned off entirely to maximize screen real estate.
+        You can show the "Check" buttons, which duplicate the functionality
+        of the "Puzzle" menu above AND provide a clock timer.  Or you can
+        show the "Keyboard" which allows you to enter letters and duplicates
+        some functionality of the hardware buttons.  The toolbar can be
+        shown on the left or right side of the screen.
+        </li>
+        <li><b>Word List Layout</b> - The "word list" is the list of
+        horizontal and vertical clues.  The default is to show only the
+        puzzle.  Alternatively, you can show the word list on the left,
+        right, top, bottom, or some combination of these.
+        </li>
+      </ul>
+    </blockquote>
+    </p>
+
+    <p>
+    <b>Help</b>
+    <blockquote>
+      <ul>
+        <li><b>About</b> - Shows information about the xword application.
+        </li>
+      </ul>
+    </blockquote>
+    </p>
+
+    </blockquote>
+
+    <hr width="70%">
+
+    <h2>hardware buttons</h2>
+    <p>
+    For convenience, the harware buttons on the NIT duplicate some of the
+    functions on the on-screen keyboard.  The table below shows the hardware
+    buttons (with the equivalent key on a "standard" computer) and their
+    function.
+    </p>
+    <table border='1'>
+      <tr>
+        <th>NIT button (Standard key)</th>
+        <th>Crossword function</th>
+      </tr>
+      <tr>
+        <td>Zoom - (F8)</td>
+        <td>Move cursor to previous word</td>
+      </tr>
+      <tr>
+        <td>Fullscreen (F6)</td>
+        <td>Toggle between windowed mode and fullscreen</td>
+      </tr>
+      <tr>
+        <td>Zoom + (F7)</td>
+        <td>Move cursor to next word</td>
+      </tr>
+      <tr>
+        <td>D-pad center button (Return)</td>
+        <td>Swap direction (horizontal &lt;-&gt; vertical)</td>
+      </tr>
+      <tr>
+        <td>D-pad up/down/left/right (Arrow keys)</td>
+        <td>Move 1 box in that direction, or swap direction</td>
+      </tr>
+      <tr>
+        <td>Escape/Go back (Esc)</td>
+        <td>Check current word</td>
+      </tr>
+    </table>
+    <p></p>
+
+    <hr width="70%">
+
+    <h2>keyboard</h2>
+    <p>
+    The on-screen keyboard allows you to enter letters for those devices
+    without a hardware keyboard (e.g. the N800).  In addition to letters,
+    there are some special buttons as shown in the image below.
+    </p>
+    <p>
+    <img src="xword-keys.png" alt="Special keys"/>
+    </p>
+
+    <hr width="70%">
+
+    <h2>screen shots</h2>
+
+    <p>
+    <a href="xword-shot1.png"><img src="xword-shot1-small.png"
+      alt="screenshot1" align="center"/></a> Windowed view with keyboard on
+    right
+    </p>
+    <p>
+    <a href="xword-shot2.png"><img src="xword-shot2-small.png"
+      alt="screenshot1" align="center"/></a> Fullscreen view with keyboard on
+    right
+    </p>
+    <p>
+    <a href="xword-shot3.png"><img src="xword-shot3-small.png"
+      alt="screenshot1" align="center"/></a> Fullscreen view with wordlist on
+    left and keyboard on right
+    </p>
+    <p>
+    <a href="xword-shot4.png"><img src="xword-shot4-small.png"
+      alt="screenshot1" align="center"/></a> Windowed view with checks on left
+    </p>
+    <p>
+    <a href="xword-shot5.png"><img src="xword-shot5-small.png"
+      alt="screenshot1" align="center"/></a> Windowed view with minimum box
+    size set to 14
+    </p>
+    <p>
+    <a href="xword-shot6.png"><img src="xword-shot6-small.png"
+      alt="screenshot1" align="center"/></a> Windowed view with minimum box
+    size set to 40
+    </p>
+    <p>
+    <a href="xword-shot7.png"><img src="xword-shot7-small.png"
+      alt="screenshot1" align="center"/></a> "File-&gt;Properties..." popup
+    box
+    </p>
+
+    <hr/>
+
+    <a name="desktop"><h1>xword on your desktop computer</h1></a>
+    <p>
+    So you want to solve crosswords on your home computer?  Well, you could
+    simply download <a
+      href="http://www.litsoft.com/across/alite/download.htm">Across
+      Lite</a> for your platform.  But you can also use the same xword
+    program that runs on your NIT on any computer that supports <a
+      href="http://www.python.org/">python</a>, <a
+      href="http://www.pygtk.org/">pyGTK</a>, and <a
+      href="http://subversion.tigris.org/">subversion</a>.
+    </p>
+    <p>Follow the installation instructions appropriate for your platform
+    for <a
+      href="http://www.python.org/download/">python</a>, <a
+      href="http://www.pygtk.org/downloads.html">pyGTK</a>, and <a
+      href="http://subversion.tigris.org/project_packages.html">subversion</a>.
+    Then download the latest xword code from the <a
+      href="https://garage.maemo.org/">maemo garage</a> using the following
+    command.
+    </p>
+    <blockquote>
+    <code>
+      svn checkout https://garage.maemo.org/svn/xword/trunk/root/
+    </code>
+    </blockquote>
+    <p>
+    Change into the newly created "<tt>usr/bin/</tt>" directory and run the
+    "<tt>xword</tt>" program you find there.  For Windows, you may need to
+    rename "<tt>xword</tt>" to "<tt>xword.py</tt>" to be able to run it by
+    double-clicking.
+    </p>
+
+    <hr/>
+
+    <a name="bugs"><h1>bugs</h1></a>
+    Please report bugs to the <a
+      href="https://garage.maemo.org/projects/xword">xword on maemo
+      team</a>.  Here are some known bugs.
+    <ol>
+      <li>If you attempt to open a file that is NOT an Across Lite .puz
+      file, the File Open dialog box will not go away requiring you to kill
+      the program (through some other mechanism).
+      </li>
+      <li>If you attempt to open a .puz file containing Across Lite Notepad
+      data, the file will open, but will not show the correct puzzle size.
+      You will probably get a bunch of extra words with blank answers.  It
+      is possible to solve the puzzle, but very inconvenient.
+      </li>
+      <li>There is limited support for "locked" puzzles.  You cannot use the
+      "check word", "solve word", or "check puzzle" functions since the
+      answers are encrypted.  However, you can solve the puzzle on your own.
+      When an unlocked version of the puzzle comes out, you can continue
+      your partially filled in puzzle and then use the "check" functions.
+      </li>
+    </ol>
+
+    <hr/>
+
+    <div align="center">
+    Last update: April 23, 2008
+    </div>
+
+  </body>
+</html>
