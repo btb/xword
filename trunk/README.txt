@@ -1,3 +1,5 @@
+BUILDING THE .DEB
+-----------------
 Since I don't know how to do a "proper" .deb release, I decided to use
 PyPackager (http://khertan.net/softwares/pypackager.php).  This runs on
 the Nokia Internet Tablet.
@@ -32,3 +34,12 @@ Here's how to build xword-x.x.x.deb on your NIT using PyPackager.
     small gears.  The process will take a few seconds and you won't see any
     result window in PyPackager.  Your newly built .deb will be in the "trunk"
     directory.
+
+RUNNING XWORD WITHOUT THE .DEB
+------------------------------
+If you have python2.5 and pyGTK on another platform (Linux, Windows, Mac OS X),
+you can simply check out the code from the subversion respository and run it.
+
+    svn checkout https://garage.maemo.org/svn/xword/trunk/root
+
+Change into the newly created "usr/bin/" directory and run "xword".
