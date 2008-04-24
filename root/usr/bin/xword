@@ -144,8 +144,17 @@ class BinaryFile:
         self.index += 1
         return c
 
+    def read_chars(self, n):
+        c = []
+        for i in range(n):
+            c.append(self.read_char())
+        return c
+
     def read_byte(self):
         return ord(self.read_char())
+
+    def read_short(self):
+        return self.read_byte() + 256 * self.read_byte()
 
     def read_string(self):
         if self.index == len(self.data): return ''
@@ -237,9 +246,20 @@ class Puzzle:
         f = BinaryFile(filename)
         self.f = f
 
+        cksum = f.read_short()
+        file_magic = f.read_string()
+        assert(file_magic == "ACROSS&DOWN")
+
+        cksum_cib = f.read_short()
+        magic_10 = f.read_chars(4)
+        magic_14 = f.read_chars(4)
+        ver_magic = f.read_string()
+        #assert(ver_magic == "1.2") #cryptic puzzles are 1.3
+        
         f.seek(0x2c)
         self.width = f.read_byte()
         self.height = f.read_byte()
+        self.clue_count = f.read_short()
 
         f.seek(0x34)
         self.answers = {}
@@ -268,10 +288,8 @@ class Puzzle:
         self.copyright = massage(f.read_string())
 
         self.clues = []
-        clue = f.read_string()
-        while clue:
-            self.clues.append(clue)
-            clue = f.read_string()
+        for n in range(self.clue_count):
+            self.clues.append(f.read_string())
 
         self.all_clues = self.clues[:]
 
