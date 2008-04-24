@@ -40,6 +40,6 @@ RUNNING XWORD WITHOUT THE .DEB
 If you have python2.5 and pyGTK on another platform (Linux, Windows, Mac OS X),
 you can simply check out the code from the subversion respository and run it.
 
-    svn checkout https://garage.maemo.org/svn/xword/trunk/root
+    svn checkout https://garage.maemo.org/svn/xword/trunk/root/usr/
 
 Change into the newly created "usr/bin/" directory and run "xword".
