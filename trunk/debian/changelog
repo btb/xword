@@ -1,3 +1,9 @@
+xword (1.0.6) stable; urgency=low
+
+  * Added osso support
+
+ -- Bradley Bell <bradleyb@u.washington.edu>  Wed, 23 Apr 2008 16:12:26 -0700
+
 xword (1.0.5) stable; urgency=low
 
   * Added new Preference menu option to set the minimum box size (between
@@ -5,7 +11,7 @@ xword (1.0.5) stable; urgency=low
   * Added two new buttons on the keyboard toolbar for "check word" and
     "solve word"
 
- -- Terrence Fleury <terrencegf@gmail.com> Tue, 22, Apr 2008 17:05:00 -0500
+ -- Terrence Fleury <terrencegf@gmail.com>  Tue, 22 Apr 2008 17:05:00 -0500
 
 xword (1.0.4) stable; urgency=low
 
@@ -19,14 +25,14 @@ xword (1.0.4) stable; urgency=low
   * Clicking on th the current "red' cell changes direction
   * Uploaded all of the icon files to the garage.maemo.org svn
 
- -- Terrence Fleury <terrencegf@gmail.com> Fri, 18 Apr 2008 11:28:00 -0500
+ -- Terrence Fleury <terrencegf@gmail.com>  Fri, 18 Apr 2008 11:28:00 -0500
 
 xword (1.0.3) stable; urgency=low
 
   * Removed the xword.sh script
   * Added a new Preference menu option to launch xkbd (if present)
 
- -- Terrence Fleury <terrencegf@gmail.com> Fri, 18 Apr 2008 11:28:00 -0500
+ -- Terrence Fleury <terrencegf@gmail.com>  Fri, 18 Apr 2008 11:28:00 -0500
 
 xword (1.0.2) unstable; urgency=low
 
@@ -36,14 +42,14 @@ xword (1.0.2) unstable; urgency=low
   * Created a script xword.sh which checks for /usr/bin/xkbd and launches
     a special xword.xkbd layout file if present
 
- -- Terrence Fleury <terrencegf@gmail.com> Fri, 18 Apr 2008 00:21:00 -0500
+ -- Terrence Fleury <terrencegf@gmail.com>  Fri, 18 Apr 2008 00:21:00 -0500
 
 xword (1.0.1) unstable; urgency=low
 
   * Initial packaging to a .deb
   * Created a program icon suitable for the Nokia N8x0
 
- -- Terrence Fleury <terrencegf@gmail.com> Thu, 17 Apr 2008 17:41:00 -0500
+ -- Terrence Fleury <terrencegf@gmail.com>  Thu, 17 Apr 2008 17:41:00 -0500
 
 xword (1.0-1.1) unstable; urgency=low
 

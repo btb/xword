@@ -1,4 +1,6 @@
-debian/xword.desktop usr/share/applications/hildon/
-*.png usr/share/xword
-xword usr/bin
-debian/xword.1 usr/share/man/man1
+root/usr/share/applications/hildon/xword.desktop usr/share/applications/hildon/
+root/usr/share/dbus-1/services/xword.service usr/share/dbus-1/services/
+root/usr/share/icons/hicolor/26x26/apps/xword.png usr/share/icons/hicolor/26x26/apps/
+root/usr/share/icons/hicolor/scalable/apps/xword.png usr/share/icons/hicolor/scalable/apps/
+root/usr/share/xword/* usr/share/xword/
+root/usr/bin/xword usr/bin
