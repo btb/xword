@@ -47,6 +47,12 @@ except:
     has_hildon = False
 
 try:
+    import osso
+    has_osso = True
+except:
+    has_osso = False
+
+try:
     import gnomeprint
     import gnomeprint.ui
     has_print = True
@@ -1313,6 +1319,8 @@ class PuzzleWindow:
         self.load_list(ACROSS)
         self.load_list(DOWN)
         self.enable_controls(True)
+        if has_osso:
+            self.notify("Opened puzzle '" + self.puzzle.title + "'")
 
         self.idle_event()
 
@@ -1380,12 +1388,16 @@ class PuzzleWindow:
         gtk.main_quit()
 
     def notify(self, msg):
-        dialog = gtk.MessageDialog(parent=self.win,
-                                   type=gtk.MESSAGE_INFO,
-                                   buttons=gtk.BUTTONS_OK,
-                                   message_format=msg)
-        dialog.connect("response", lambda dlg, resp: dlg.destroy())
-        dialog.show()
+        if has_osso:
+            note = osso.SystemNote(osso_c)
+            note.system_note_infoprint(msg)
+        else:
+            dialog = gtk.MessageDialog(parent=self.win,
+                                       type=gtk.MESSAGE_INFO,
+                                       buttons=gtk.BUTTONS_OK,
+                                       message_format=msg)
+            dialog.connect("response", lambda dlg, resp: dlg.destroy())
+            dialog.show()
 
     def ask(self, msg, opts):
         dialog = gtk.MessageDialog(parent=self.win,
@@ -2094,7 +2106,21 @@ class PuzzleWindow:
         c.write(file(os.path.expanduser('~/.crossword.cfg'), 'w'))
 
 
+def osso_callback(interface, method, arguments, user_data):
+    if method == 'mime_open':
+        filename = arguments[0]
+        if filename.startswith('file://'):
+            filename = filename[7:]
+        if os.path.exists(filename):
+            w.do_open_file(filename)
+
 if __name__ == '__main__':
+    if has_osso:
+        osso_c = osso.Context("xword", __version__, False)
+        osso_rpc = osso.Rpc(osso_c)
+        osso_rpc.set_rpc_callback("org.maemo.xword", "/org/maemo/xword",
+                                  "org.maemo.xword", osso_callback, osso_c)
+
     if len(sys.argv) <> 2:
         p = None
     else:

@@ -5,6 +5,7 @@ Name=Xword
 GenericName=Crossword Puzzles
 Comment=Play crossword puzzles
 Exec=/usr/bin/xword
+X-Osso-Service=org.maemo.xword
 Icon=xword
 Terminal=false
 Type=Application
