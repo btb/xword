@@ -293,6 +293,8 @@ class Puzzle:
 
         self.all_clues = self.clues[:]
 
+        self.notes = f.read_string()
+
         self.setup()
 
     def setup(self):
@@ -1484,6 +1486,24 @@ class PuzzleWindow:
         show_props.run()
         show_props.destroy()
 
+    def show_notepad(self):
+        notepad = gtk.Dialog('Notepad', self.win)
+        notepad.set_has_separator(False)
+        notepad.set_resizable(True)
+        textbuf = gtk.TextBuffer()
+        textbuf.set_text(self.puzzle.notes)
+        textview = gtk.TextView(textbuf)
+        scrollwin = gtk.ScrolledWindow()
+        scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        scrollwin.add(textview)
+        notepad.vbox.pack_start(scrollwin, True, True, 0)
+        notepad.vbox.show_all()
+        close_button = notepad.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
+        close_button.grab_focus()
+        notepad.set_size_request(650, 350)
+        notepad.run()
+        notepad.destroy()
+
     def show_about(self):
         # Help > About
         self.about_dialog = gtk.AboutDialog()
@@ -1699,6 +1719,7 @@ class PuzzleWindow:
         append(menu, 'check_puzzle', create_menu_item('Check Puzzle', 'Check Puzzle'))
         append(menu, 'solve_word', create_menu_item('Solve Word', 'Solve Word'))
         append(menu, 'clear_puzzle', create_menu_item('Clear Puzzle', 'Clear Puzzle'))
+        append(menu, 'notepad', create_menu_item('Notepad...', 'notepad'))
 
         prefs_menu = gtk.MenuItem('Preferences')
         menubar.append(prefs_menu)
@@ -1775,6 +1796,8 @@ class PuzzleWindow:
             self.control.solve_word()
         elif action == 'Clear Puzzle':
             self.clear_puzzle()
+        elif action == 'notepad':
+            self.show_notepad()
         elif action == 'properties':
             self.show_properties()
         elif action == 'about':
