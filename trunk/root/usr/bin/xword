@@ -307,6 +307,7 @@ class Puzzle:
         self.is_across = {}
         self.is_down = {}
         number = 1
+        used_number = False
         for y in range(self.height):
             for x in range(self.width):
                 is_fresh_x = self.is_black(x-1, y)
@@ -314,27 +315,30 @@ class Puzzle:
 
                 if not self.is_black(x, y):
                     if is_fresh_x:
-                        self.across_map[x, y] = number
                         if self.is_black(x+1, y):
-                            self.across_clues[number] = ''
+                            self.across_map[x, y] = 0
                         else:
+                            self.across_map[x, y] = number
                             self.across_clues[number] = self.clues.pop(0)
+                            used_number = True
                     else: self.across_map[x, y] = self.across_map[x-1, y]
-                    
+
                     if is_fresh_y:
-                        self.down_map[x, y] = number
                         if self.is_black(x, y+1): # see April 30, 2006 puzzle
-                            self.down_clues[number] = ''
+                            self.down_map[x, y] = 0
                         else:
+                            self.down_map[x, y] = number
                             self.down_clues[number] = self.clues.pop(0)
+                            used_number = True
                     else: self.down_map[x, y] = self.down_map[x, y-1]
 
-                    if is_fresh_x or is_fresh_y:
+                    if used_number:
                         self.is_across[number] = is_fresh_x
                         self.is_down[number] = is_fresh_y
                         self.number_map[number] = (x, y)
                         self.number_rev_map[x, y] = number
                         number += 1
+                        used_number = False
                 else:
                     self.across_map[x, y] = 0
                     self.down_map[x, y] = 0
@@ -1021,6 +1025,13 @@ class PuzzleController:
         return sel
 
     def switch_mode(self):
+        if self.mode is ACROSS:
+            if not self.puzzle.down_map[self.x, self.y]:
+                return
+        if self.mode is DOWN:
+            if not self.puzzle.across_map[self.x, self.y]:
+                return
+
         self.mode = 1-self.mode
 
         old_sel = self.selection
@@ -1035,6 +1046,13 @@ class PuzzleController:
         if not self.puzzle.is_black(x, y):
             self.x = x
             self.y = y
+
+            if self.mode is ACROSS:
+                if not self.puzzle.across_map[self.x, self.y]:
+                    self.switch_mode()
+            if self.mode is DOWN:
+                if not self.puzzle.down_map[self.x, self.y]:
+                    self.switch_mode()
 
             old_sel = self.selection
             self.selection = self.get_selection()
@@ -1912,14 +1930,20 @@ class PuzzleWindow:
     def across_update(self, an):
         if self.tree_paths.has_key(ACROSS):
             selection = self.trees[ACROSS].get_selection()
-            selection.select_path(self.tree_paths[ACROSS][an])
-            self.trees[ACROSS].scroll_to_cell(self.tree_paths[ACROSS][an])
+            if an:
+                selection.select_path(self.tree_paths[ACROSS][an])
+                self.trees[ACROSS].scroll_to_cell(self.tree_paths[ACROSS][an])
+            else:
+                selection.unselect_all()
 
     def down_update(self, dn):
         if self.tree_paths.has_key(DOWN):
             selection = self.trees[DOWN].get_selection()
-            selection.select_path(self.tree_paths[DOWN][dn])
-            self.trees[DOWN].scroll_to_cell(self.tree_paths[DOWN][dn])
+            if dn:
+                selection.select_path(self.tree_paths[DOWN][dn])
+                self.trees[DOWN].scroll_to_cell(self.tree_paths[DOWN][dn])
+            else:
+                selection.unselect_all()
 
     def idle_event(self):
         t = time.time()
