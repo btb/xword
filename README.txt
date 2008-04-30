@@ -1,10 +1,23 @@
 BUILDING THE .DEB
 -----------------
-Since I don't know how to do a "proper" .deb release, I decided to use
-PyPackager (http://khertan.net/softwares/pypackager.php).  This runs on
-the Nokia Internet Tablet.
 
-Here's how to build xword-x.x.x.deb on your NIT using PyPackager.
+An xword deb file can be built in Scratchbox, or on a normal Debian
+system, or on a Nokia Internet Tablet using PyPackager
+(http://khertan.net/softwares/pypackager.php).
+
+Building in Scratchbox, or on a normal Debian-based system, the
+process is the same:
+
+(1) Unpack the tar.gz file, or check out the code from subversion
+
+(2) Change into the source directory
+
+(3) Execute dpkg-buildpackage:
+
+    dpkg-buildpackage -rfakeroot -i
+
+
+Building using PyPackager:
 
 (1) Check out the code from the subversion repository:
 
