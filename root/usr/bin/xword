@@ -180,6 +180,7 @@ class PersistentPuzzle:
         self.responses = {}
         self.errors = {}
         self.clock = 0
+        self.notes = ''
 
     def get_size(self, m):
         width = 0
@@ -207,12 +208,19 @@ class PersistentPuzzle:
             bin2[index] = chr(self.errors[x, y])
 
         bin = ''.join(bin1 + bin2)
-        return '%d %d %d %s' % (width, height, int(self.clock), bin)
+        return '%d %d %d %s %s%c' % (width, height, int(self.clock), bin, self.notes, chr(0))
 
     def get_int(self, s, pos):
         pos0 = pos
         while pos < len(s) and s[pos].isdigit(): pos += 1
         return (int(s[pos0:pos]), pos)
+
+    def get_string(self, s, pos):
+        str = ''
+        while pos < len(s) and ord(s[pos]) is not 0:
+            str += s[pos]
+            pos += 1
+        return (str, pos)
 
     def from_binary(self, bin):
         pos = 0
@@ -225,7 +233,12 @@ class PersistentPuzzle:
 
         count = width*height
         bin1 = bin[pos:pos+count]
-        bin2 = bin[pos+count:]
+        pos += count
+        bin2 = bin[pos:pos+count]
+        pos += count
+
+        pos += 1
+        (self.notes, pos) = self.get_string(bin, pos)
 
         self.responses = {}
         self.errors = {}
@@ -1383,6 +1396,8 @@ class PuzzleWindow:
             
             self.puzzle.responses = pp.responses
             self.puzzle.errors = pp.errors
+            if len(pp.notes) > 0:
+                self.puzzle.notes = pp.notes
             self.clock_time = pp.clock
         except:
             self.notify('The saved puzzle is corrupted. It will not be used.')
@@ -1414,6 +1429,8 @@ class PuzzleWindow:
         if self.clock_running:
             self.clock_time += (time.time() - self.clock_start)
         pp.clock = self.clock_time
+
+        pp.notes = self.puzzle.notes
 
         fname = self.get_puzzle_file(self.puzzle)
         f = file(fname, 'w+')
@@ -1502,6 +1519,8 @@ class PuzzleWindow:
         close_button.grab_focus()
         notepad.set_size_request(650, 350)
         notepad.run()
+        (start, end) = textbuf.get_bounds()
+        self.puzzle.notes = textbuf.get_slice(start, end, True)
         notepad.destroy()
 
     def show_about(self):
