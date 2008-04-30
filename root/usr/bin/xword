@@ -266,9 +266,9 @@ class Puzzle:
         cksum_cib = f.read_short()
         magic_10 = f.read_chars(4)
         magic_14 = f.read_chars(4)
-        ver_magic = f.read_string()
-        #assert(ver_magic == "1.2") #cryptic puzzles are 1.3
-        
+        # most puzzles are v 1.2, cryptic puzzles are 1.3
+        puz_version = f.read_string()
+
         f.seek(0x2c)
         self.width = f.read_byte()
         self.height = f.read_byte()
@@ -1360,7 +1360,11 @@ class PuzzleWindow:
         
         if self.puzzle: self.write_puzzle()
 
-        self.set_puzzle(Puzzle(fname), start_over)
+        try:
+            self.set_puzzle(Puzzle(fname), start_over)
+        except:
+            self.notify("%s could not be loaded" % fname)
+            return
         self.last_file = fname
         self.control = PuzzleController(self.puzzle)
         self.setup_controller()
@@ -2205,10 +2209,13 @@ if __name__ == '__main__':
         osso_rpc.set_rpc_callback("org.maemo.xword", "/org/maemo/xword",
                                   "org.maemo.xword", osso_callback, osso_c)
 
-    if len(sys.argv) <> 2:
-        p = None
-    else:
-        p = Puzzle(sys.argv[1])
-        
+    p = None
+    if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
+        try:
+            p = Puzzle(sys.argv[1])
+        except:
+            print "%s could not be loaded" % sys.argv[1]
+            p = None
+
     w = PuzzleWindow(p)
     gtk.main()
