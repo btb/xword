@@ -39,9 +39,8 @@
     </li>
     <li>The program has been tested with OS2006 and OS2008, so it
     should run on any Nokia Internet Tablet, including the 770. The
-    .deb requires python2.5 and python2.5-gtk2. It is possible that
-    the program would run with 2.4 versions, but it has not been
-    tested.
+    .deb requires python2.5, python2.5-gtk2, python2.5-hildon, and
+    python2.5-osso.
     </li>
     </ul>
     </p>
@@ -50,27 +49,28 @@
 
     <a name="installing"><h1>installing xword</h1></a>
     <p>
-    To install xword on your NIT, you need to install python2.5 and
-    python2.5-gtk.  These are available in the <a
-      href="http://repository.maemo.org/extras/">maemo extras</a>
+    To install xword on your NIT, you need to install the python
+    packages mentioned above.  These are available in the <a
+    href="http://repository.maemo.org/extras/">maemo extras</a>
     repository.  Go into the Application Manager, select the menu
-    "Tools-&gt;Application catalog..." and verify that "maemo Extras" is not
-    grayed out.  If it is, select "maemo Extras", click the "Edit" button,
-    and uncheck the "Disabled" checkbox.  Then click "OK", and then "Close".
-    Let the Applciation Manager reread the catalog list.
+    "Tools-&gt;Application catalog..." and verify that "maemo Extras"
+    is not grayed out.  If it is, select "maemo Extras", click the
+    "Edit" button, and uncheck the "Disabled" checkbox.  Then click
+    "OK", and then "Close".  Let the Applciation Manager reread the
+    catalog list.
     </p>
 
     <p>
-    Now, <a href="https://garage.maemo.org/frs/?group_id=620">install the
-      latest vesion of the xword.deb file</a>.  If the program does not
-    automatically install, you may need to open an xterm and install
-    everything manually as root.  So SAVE the latest xword.deb to your NIT
-    and then run the following commands in a terminal.
+    Now, <a href="https://garage.maemo.org/frs/?group_id=620">install
+    the latest version of the xword.deb file</a>.  If the program does
+    not automatically install, you may need to open an xterm and
+    install everything manually as root.  So SAVE the latest xword.deb
+    to your NIT and then run the following commands in a terminal.
     </p>
     <blockquote>
       <code>
         sudo gainroot<br/>
-        apt-get install python2.5 python2.5-gtk2<br/>
+        apt-get install python2.5 python2.5-gtk2 python2.5-hildon python2.5-gtk2<br/>
         dpkg -i /home/user/xword-x.x.x.deb
       </code>
     </blockquote>
@@ -340,18 +340,6 @@
       href="https://garage.maemo.org/projects/xword">xword on maemo
       team</a>.  Here are some known bugs.
     <ol>
-      <li>If you attempt to open a file that is NOT an Across Lite .puz
-      file, the File Open dialog box will not go away requiring you to kill
-      the program (through some other mechanism).  Also, the bad file may be
-      written to your configuration settings file, preventing you from
-      running the program again.  To fix this, remove the
-      "<tt>.crossword.cfg</tt>" file in your home directory.
-      </li>
-      <li>If you attempt to open a .puz file containing Across Lite Notepad
-      data, the file will open, but will not show the correct puzzle size.
-      You will probably get a bunch of extra words with blank answers.  It
-      is possible to solve the puzzle, but very inconvenient.
-      </li>
       <li>There is limited support for "locked" puzzles.  You cannot use the
       "check word", "solve word", or "check puzzle" functions since the
       answers are encrypted.  However, you can solve the puzzle on your own.
@@ -363,7 +351,7 @@
     <hr/>
 
     <div align="center">
-    Last update: April 23, 2008
+    Last update: April 29, 2008
     </div>
 
   </body>
