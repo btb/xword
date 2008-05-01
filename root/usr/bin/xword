@@ -1374,7 +1374,7 @@ class PuzzleWindow:
         self.load_list(ACROSS)
         self.load_list(DOWN)
         self.enable_controls(True)
-        if has_osso:
+        if has_hildon:
             self.notify("Opened puzzle '" + self.puzzle.title + "'")
 
         self.idle_event()
@@ -1447,9 +1447,8 @@ class PuzzleWindow:
         gtk.main_quit()
 
     def notify(self, msg):
-        if has_osso:
-            note = osso.SystemNote(osso_c)
-            note.system_note_infoprint(msg)
+        if has_hildon:
+            hildon.hildon_banner_show_information(self.win, None, msg)
         else:
             dialog = gtk.MessageDialog(parent=self.win,
                                        type=gtk.MESSAGE_INFO,
