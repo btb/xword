@@ -18,7 +18,7 @@
     <p>
     xword is a crossword puzzle program for the Nokia Internet Tablet
     (NIT) which can read <a href="http://www.litsoft.com/">Across
-    Lite</a> .puz files.
+    Lite</a> ".puz" files.
     It is written in <a
       href="http://www.python.org/">python</a> using <a
       href="http://www.pygtk.org/">pyGTK</a>.  It is based on the <a
@@ -32,10 +32,10 @@
     caveats.
     <ul>
       <li>The program is <b>sloooow</b>.  It is basically one very long
-      python script.  On the NIT, there is sometimes a one second delay
-      between input and screen update.  Fortunately, touchscreen inputs are
-      queued so that you don't have to wait for the screen to update before
-      entering the next letter.
+      python script.  On the NIT with large crossword puzzles, there is
+      sometimes a one second delay between input and screen update.
+      Fortunately, touchscreen inputs are queued so that you don't have to
+      wait for the screen to update before entering the next letter.
     </li>
     <li>The program has been tested with OS2006 and OS2008, so it
     should run on any Nokia Internet Tablet, including the 770. The
@@ -56,25 +56,27 @@
     "Tools-&gt;Application catalog..." and verify that "maemo Extras"
     is not grayed out.  If it is, select "maemo Extras", click the
     "Edit" button, and uncheck the "Disabled" checkbox.  Then click
-    "OK", and then "Close".  Let the Applciation Manager reread the
+    "OK", and then "Close".  Let the Application Manager reread the
     catalog list.
     </p>
 
     <p>
     Now, <a href="https://garage.maemo.org/frs/?group_id=620">install
     the latest version of the xword.deb file</a>.  If the program does
-    not automatically install, you may need to open an xterm and
-    install everything manually as root.  So SAVE the latest xword.deb
-    to your NIT and then run the following commands in a terminal.
+    not install correctly, you may need to enable <a
+    href="http://maemo.org/community/wiki/ApplicationManagerRedPillMode/">Red
+    Pill mode</a>.  Alternatively, you can open an xterm and
+    install everything manually as root.  To do this, SAVE the latest
+    xword.deb to your NIT and then run the following commands in a terminal.
     </p>
     <blockquote>
       <code>
         sudo gainroot<br/>
-        apt-get install python2.5 python2.5-gtk2 python2.5-hildon python2.5-gtk2<br/>
-        dpkg -i /home/user/xword-x.x.x.deb
+        apt-get install python2.5 python2.5-gtk2 python2.5-hildon python2.5-osso<br/>
+        dpkg -i xword-x.x.x_all.deb
       </code>
     </blockquote>
-    <p>Be sure to change the "xword-x.x.x.deb" file to the correct file
+    <p>Be sure to change the "xword-x.x.x_all.deb" file to the correct file
     name.
     </p>
     <p>
@@ -98,8 +100,8 @@
     Times</a>.  The <a
     href="http://www.chron.com/entertainment/games/">Houston Chronicle</a>
     also has a <a
-    href="http://www.chron.com/apps/games/xword/puzzles/">selection of free
-    puzzles</a>.
+    href="http://www.chron.com/apps/games/xword/puzzles/">two week archive
+    of free puzzles</a>.
     </p>
     <p>
     In general, tap the box you want to move to.  That box will appear in
@@ -142,8 +144,8 @@
     <blockquote>
       <ul>
         <li><b>Check Word</b> - Check the current word for correctness.  If
-        the word is correct, you will be shown a popup window saying "No
-        mistakes found".  Otherwise, you will be shown a popup window saying
+        the word is correct, you will be shown a pop-up window saying "No
+        mistakes found".  Otherwise, you will be shown a pop-up window saying
         "Incorrect" and the incorrect letters will be marked with a big "X"
         through them as well as a small black triangle in the corner to keep
         track of the letters you needed help with.
@@ -178,7 +180,7 @@
         </li>
         <li><b>Set Min Box Size</b> - Bring up a dialog allowing you to set
         the minimum box size of each letter square.  The default size is 20
-        which allows a 21x21 puzzle to fit fullscreen without scrollbars.
+        which allows a 21x21 puzzle to fit full screen without scrollbars.
         You can set this value between 12 and 40 inclusive.
         </li>
         <li><b>Toolbar Layout</b> - Set the location of the "toolbar".  The
@@ -214,10 +216,10 @@
 
     <h2>hardware buttons</h2>
     <p>
-    For convenience, the harware buttons on the NIT duplicate some of the
+    For convenience, the hardware buttons on the NIT duplicate some of the
     functions on the on-screen keyboard.  The table below shows the hardware
-    buttons (with the equivalent key on a "standard" computer) and their
-    function.
+    buttons (with the equivalent key on a "standard" computer keyboard) and
+    their functions.
     </p>
     <table border='1'>
       <tr>
@@ -229,8 +231,8 @@
         <td>Move cursor to previous word</td>
       </tr>
       <tr>
-        <td>Fullscreen (F6)</td>
-        <td>Toggle between windowed mode and fullscreen</td>
+        <td>Full screen (F6)</td>
+        <td>Toggle between windowed mode and full screen</td>
       </tr>
       <tr>
         <td>Zoom + (F7)</td>
@@ -275,12 +277,12 @@
     </p>
     <p>
     <a href="xword-shot2.png"><img src="xword-shot2-small.png"
-      alt="screenshot1" align="center"/></a> Fullscreen view with keyboard on
+      alt="screenshot1" align="center"/></a> Full screen view with keyboard on
     right
     </p>
     <p>
     <a href="xword-shot3.png"><img src="xword-shot3-small.png"
-      alt="screenshot1" align="center"/></a> Fullscreen view with word list
+      alt="screenshot1" align="center"/></a> Full screen view with word list
       on left and keyboard on right
     </p>
     <p>
@@ -299,7 +301,7 @@
     </p>
     <p>
     <a href="xword-shot7.png"><img src="xword-shot7-small.png"
-      alt="screenshot1" align="center"/></a> "File-&gt;Properties..." popup
+      alt="screenshot1" align="center"/></a> "File-&gt;Properties..." pop-up
     box
     </p>
 
@@ -355,7 +357,7 @@
     <hr/>
 
     <div align="center">
-    Last update: April 29, 2008
+    Last update: May 3, 2008
     </div>
 
   </body>
