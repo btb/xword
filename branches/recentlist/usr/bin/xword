@@ -1239,6 +1239,47 @@ class DummyController:
     def get_clues(self, mode):
         return []
 
+
+class RecentList:
+    def __init__(self, parent):
+        self.max_entries = 5
+        self.parent = parent
+        self.recent_list = []
+        self.update_menu()
+
+    def add(self,newentry):
+        self.delete(newentry)
+        self.recent_list.insert(0,newentry)
+        if len(self.recent_list) > self.max_entries:
+            del self.recent_list[-1]
+        self.update_menu()
+
+    def delete(self,newentry):
+        if newentry in self.recent_list:
+            try:
+                self.recent_list.remove(newentry)
+                self.update_menu()
+            except ValueError:
+                pass
+
+    def set(self, newlist=[]):
+        self.recent_list = newlist
+        self.update_menu()
+
+    def update_menu(self):
+        for child in self.parent.recent_menu.get_children():
+            self.parent.recent_menu.remove(child)
+        if len(self.recent_list) == 0:
+            emptymenu = gtk.MenuItem('Empty')
+            self.parent.recent_menu.append(emptymenu)
+        else:
+            for item in self.recent_list:
+                m = gtk.MenuItem(item.split(os.sep)[-1])
+                m.connect('activate', self.parent.menu_selected, 'recent', item)
+                self.parent.recent_menu.append(m)
+        self.parent.recent_menu.show_all()
+
+
 class PuzzleWindow:
     def __init__(self, puzzle):
         self.clock_time = 0.0
@@ -1249,6 +1290,9 @@ class PuzzleWindow:
 
         if self.puzzle: self.control = PuzzleController(self.puzzle)
         else: self.control = DummyController()
+
+        self.recent_menu = gtk.Menu()
+        self.recent = RecentList(self)
 
         self.skip_filled = False
         self.layout = 0
@@ -1337,6 +1381,7 @@ class PuzzleWindow:
         def enable(w): w.set_property('sensitive', enabled)
         
         enable(self.menu_items['save'])
+        enable(self.menu_items['recent'])
         enable(self.menu_items['properties'])
         if has_print:
             enable(self.menu_items['print'])
@@ -1366,14 +1411,7 @@ class PuzzleWindow:
             self.notify("%s could not be loaded" % fname)
             return
         self.last_file = fname
-        recent_manager = gtk.recent_manager_get_default()
-        recent_manager.add_full("file://" + fname, {
-            'mime_type': 'application/x-crossword',
-            'app_name': 'xword',
-            'app_exec': os.path.join(sys.path[0], sys.argv[0].split("/")[-1]) + ' %f',
-            'display_name': str(self.puzzle.title),
-            'description': str("\n".join([ self.puzzle.title, self.puzzle.author, self.puzzle.copyright ]))
-            })
+        self.recent.add(fname)
         self.control = PuzzleController(self.puzzle)
         self.setup_controller()
         self.clue_widget.set_controller(self.control)
@@ -1396,7 +1434,7 @@ class PuzzleWindow:
         try: os.mkdir(dir)
         except OSError: pass
 
-        return dir + '/' + puzzle.hashcode()
+        return dir + os.sep + puzzle.hashcode()
 
     def clear_puzzle(self):
         if self.last_file: self.do_open_file(self.last_file, True)
@@ -1731,7 +1769,9 @@ class PuzzleWindow:
         file_menu.set_submenu(menu)
 
         append(menu, 'open', create_menu_item('Open', MENU_OPEN, 'O'))
-        append(menu, 'recent', create_menu_item('Open Recent...', 'recent'))
+        item = create_menu_item('Recent', 0)
+        item.set_submenu(self.recent_menu)
+        append(menu, 'recent', item)
         append(menu, 'save', create_menu_item('Save', MENU_SAVE, 'S'))
         if has_print:
             append(menu, 'print', create_menu_item('Print...', MENU_PRINT, 'P'))
@@ -1751,19 +1791,6 @@ class PuzzleWindow:
         append(menu, 'solve_word', create_menu_item('Solve Word', 'Solve Word'))
         append(menu, 'clear_puzzle', create_menu_item('Clear Puzzle', 'Clear Puzzle'))
         append(menu, 'notepad', create_menu_item('Notepad...', 'notepad'))
-
-        recent_menu = gtk.MenuItem('Recent')
-        menubar.append(recent_menu)
-
-        menu = gtk.RecentChooserMenu()
-        recent_menu.set_submenu(menu)
-
-        menu.set_show_icons(False)
-        menu.set_show_not_found(False)
-        recent_filter = gtk.RecentFilter()
-        recent_filter.add_mime_type('application/x-crossword')
-        menu.set_filter(recent_filter)
-        menu.connect('item-activated', self.recent_selected)
 
         prefs_menu = gtk.MenuItem('Preferences')
         menubar.append(prefs_menu)
@@ -1819,7 +1846,7 @@ class PuzzleWindow:
         self.win.add_accel_group(accel)
         return menubar
 
-    def menu_selected(self, item, action):
+    def menu_selected(self, item, action, extra=None):
         if action == MENU_QUIT:
             self.exit()
         elif action == MENU_CLOSE:
@@ -1829,7 +1856,7 @@ class PuzzleWindow:
         elif action == MENU_OPEN:
             self.open_file()
         elif action == 'recent':
-            self.open_recent()
+            self.open_recent(extra)
         elif action == MENU_SAVE:
             self.save_file()
         elif action == MENU_PRINT:
@@ -1857,13 +1884,6 @@ class PuzzleWindow:
         elif action < 0:
             layout = -(action+1)
             if layout <> self.layout: self.set_layout(layout)
-
-    def recent_selected(self, recent_chooser):
-        filename = recent_chooser.get_current_item().get_uri()
-        if filename.startswith('file://'):
-            filename = filename[7:]
-        if file and os.path.exists(filename):
-            self.do_open_file(filename)
 
     def create_toolbar_item(self, label, icon, tooltip, is_toggle=False):
         if icon:
@@ -2126,7 +2146,7 @@ class PuzzleWindow:
             dlg.connect('destroy', lambda w: dlg.destroy())
             dlg.ok_button.connect('clicked', open_cb, dlg)
             dlg.cancel_button.connect('clicked', lambda w: dlg.destroy())
-            if self.default_loc: dlg.set_filename(self.default_loc + '/')
+            if self.default_loc: dlg.set_filename(self.default_loc + os.sep)
             dlg.show()
         else:
             if has_hildon:
@@ -2147,26 +2167,6 @@ class PuzzleWindow:
             else:
                 dlg.destroy()
 
-    def open_recent(self):
-        dlg = gtk.RecentChooserDialog("Recent Puzzles",
-                                      None,
-                                      None,
-                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                       gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-        dlg.set_show_icons(False)
-        dlg.set_show_not_found(False)
-        recent_filter = gtk.RecentFilter()
-        recent_filter.add_mime_type('application/x-crossword')
-        dlg.set_filter(recent_filter)
-        dlg.set_default_response(gtk.RESPONSE_OK)
-        if self.default_loc: dlg.set_current_folder(self.default_loc)
-
-        response = dlg.run()
-        if response == gtk.RESPONSE_OK:
-            self.recent_selected(dlg)
-
-        dlg.destroy()
-
     def save_file(self):
         def save_cb(w, save_dlg):
             self.do_save_file(save_dlg.get_filename())
@@ -2177,7 +2177,7 @@ class PuzzleWindow:
             dlg.connect('destroy', lambda w: dlg.destroy())
             dlg.ok_button.connect('clicked', save_cb, dlg)
             dlg.cancel_button.connect('clicked', lambda w: dlg.destroy())
-            if self.default_loc: dlg.set_filename(self.default_loc + '/')
+            if self.default_loc: dlg.set_filename(self.default_loc + os.sep)
             dlg.show()
         else:
             if has_hildon:
@@ -2197,6 +2197,14 @@ class PuzzleWindow:
                 save_cb(None, dlg)
             else:
                 dlg.destroy()
+
+    def open_recent(self, filename):
+        if filename != None:
+            if os.path.exists(filename):
+                self.do_open_file(filename)
+            else:
+                self.notify('File not found.')
+                self.recent.delete(filename)
 
     def print_puzzle(self):
         if has_print:
@@ -2228,6 +2236,8 @@ class PuzzleWindow:
                 self.last_file = eval(c.get('options', 'last_file'))
             if c.has_option('options', 'min_box_size'):
                 self.min_box_size = c.getint('options', 'min_box_size')
+            if c.has_option('options', 'recent_list'):
+                self.recent.set(eval(c.get('options', 'recent_list')));
 
     def write_config(self):
         c = ConfigParser.ConfigParser()
@@ -2241,6 +2251,7 @@ class PuzzleWindow:
         c.set('options', 'default_loc', repr(self.default_loc))
         c.set('options', 'last_file', repr(self.last_file))
         c.set('options', 'min_box_size', self.min_box_size)
+        c.set('options', 'recent_list', repr(self.recent.recent_list))
         c.write(file(os.path.expanduser('~/.crossword.cfg'), 'w'))
 
 
