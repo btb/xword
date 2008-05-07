@@ -1,0 +1,13 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0.0
+Name=Xword
+GenericName=Crossword Puzzles
+Comment=Play crossword puzzles
+Exec=/usr/bin/xword
+X-Osso-Service=org.maemo.xword
+Icon=xword
+Terminal=false
+Type=Application
+MimeType=application/x-crossword;
+Categories=Game;LogicGame;
