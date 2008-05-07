@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 __license__ = """
 Copyright (c) 2005-2006,
@@ -1366,6 +1366,14 @@ class PuzzleWindow:
             self.notify("%s could not be loaded" % fname)
             return
         self.last_file = fname
+        recent_manager = gtk.recent_manager_get_default()
+        recent_manager.add_full("file://" + fname, {
+            'mime_type': 'application/x-crossword',
+            'app_name': 'xword',
+            'app_exec': os.path.join(sys.path[0], sys.argv[0].split("/")[-1]) + ' %f',
+            'display_name': str(self.puzzle.title),
+            'description': str("\n".join([ self.puzzle.title, self.puzzle.author, self.puzzle.copyright ]))
+            })
         self.control = PuzzleController(self.puzzle)
         self.setup_controller()
         self.clue_widget.set_controller(self.control)
@@ -1723,6 +1731,7 @@ class PuzzleWindow:
         file_menu.set_submenu(menu)
 
         append(menu, 'open', create_menu_item('Open', MENU_OPEN, 'O'))
+        append(menu, 'recent', create_menu_item('Open Recent...', 'recent'))
         append(menu, 'save', create_menu_item('Save', MENU_SAVE, 'S'))
         if has_print:
             append(menu, 'print', create_menu_item('Print...', MENU_PRINT, 'P'))
@@ -1742,6 +1751,19 @@ class PuzzleWindow:
         append(menu, 'solve_word', create_menu_item('Solve Word', 'Solve Word'))
         append(menu, 'clear_puzzle', create_menu_item('Clear Puzzle', 'Clear Puzzle'))
         append(menu, 'notepad', create_menu_item('Notepad...', 'notepad'))
+
+        recent_menu = gtk.MenuItem('Recent')
+        menubar.append(recent_menu)
+
+        menu = gtk.RecentChooserMenu()
+        recent_menu.set_submenu(menu)
+
+        menu.set_show_icons(False)
+        menu.set_show_not_found(False)
+        recent_filter = gtk.RecentFilter()
+        recent_filter.add_mime_type('application/x-crossword')
+        menu.set_filter(recent_filter)
+        menu.connect('item-activated', self.recent_selected)
 
         prefs_menu = gtk.MenuItem('Preferences')
         menubar.append(prefs_menu)
@@ -1806,6 +1828,8 @@ class PuzzleWindow:
             self.skip_filled = not self.skip_filled
         elif action == MENU_OPEN:
             self.open_file()
+        elif action == 'recent':
+            self.open_recent()
         elif action == MENU_SAVE:
             self.save_file()
         elif action == MENU_PRINT:
@@ -1833,6 +1857,13 @@ class PuzzleWindow:
         elif action < 0:
             layout = -(action+1)
             if layout <> self.layout: self.set_layout(layout)
+
+    def recent_selected(self, recent_chooser):
+        filename = recent_chooser.get_current_item().get_uri()
+        if filename.startswith('file://'):
+            filename = filename[7:]
+        if file and os.path.exists(filename):
+            self.do_open_file(filename)
 
     def create_toolbar_item(self, label, icon, tooltip, is_toggle=False):
         if icon:
@@ -2115,6 +2146,26 @@ class PuzzleWindow:
                 open_cb(None, dlg)
             else:
                 dlg.destroy()
+
+    def open_recent(self):
+        dlg = gtk.RecentChooserDialog("Recent Puzzles",
+                                      None,
+                                      None,
+                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                       gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dlg.set_show_icons(False)
+        dlg.set_show_not_found(False)
+        recent_filter = gtk.RecentFilter()
+        recent_filter.add_mime_type('application/x-crossword')
+        dlg.set_filter(recent_filter)
+        dlg.set_default_response(gtk.RESPONSE_OK)
+        if self.default_loc: dlg.set_current_folder(self.default_loc)
+
+        response = dlg.run()
+        if response == gtk.RESPONSE_OK:
+            self.recent_selected(dlg)
+
+        dlg.destroy()
 
     def save_file(self):
         def save_cb(w, save_dlg):
