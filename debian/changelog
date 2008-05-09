@@ -1,9 +1,8 @@
 xword (1.0.7) stable; urgency=low
 
   * Use HildonBanner for notifications
-  * Added dialog and menu for recent items
 
- -- Bradley Bell <bradleyb@u.washington.edu>  Tue, 06 May 2008 19:11:36 -0700
+ -- Bradley Bell <bradleyb@u.washington.edu>  Wed, 30 Apr 2008 19:55:35 -0700
 
 xword (1.0.6) stable; urgency=low
 
