@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-__version__ = "1.0.5"
+__version__ = "1.0.7"
 
 __license__ = """
 Copyright (c) 2005-2006,
@@ -68,7 +68,7 @@ import pickle
 import ConfigParser
 
 HOME_PATH = '/usr/share/xword'
-if os.path.exists('../share/xword/check.xpm'): HOME_PATH = '../share/xword'
+if os.path.exists('data/check.xpm'): HOME_PATH = 'data'
 CHECK_ICON = HOME_PATH + '/crossword-check.png'
 CHECK_ALL_ICON = HOME_PATH + '/crossword-check-all.png'
 SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
@@ -142,8 +142,17 @@ class BinaryFile:
         self.index += 1
         return c
 
+    def read_chars(self, n):
+        c = []
+        for i in range(n):
+            c.append(self.read_char())
+        return c
+
     def read_byte(self):
         return ord(self.read_char())
+
+    def read_short(self):
+        return self.read_byte() + 256 * self.read_byte()
 
     def read_string(self):
         if self.index == len(self.data): return ''
@@ -169,6 +178,7 @@ class PersistentPuzzle:
         self.responses = {}
         self.errors = {}
         self.clock = 0
+        self.notes = ''
 
     def get_size(self, m):
         width = 0
@@ -196,12 +206,19 @@ class PersistentPuzzle:
             bin2[index] = chr(self.errors[x, y])
 
         bin = ''.join(bin1 + bin2)
-        return '%d %d %d %s' % (width, height, int(self.clock), bin)
+        return '%d %d %d %s %s%c' % (width, height, int(self.clock), bin, self.notes, chr(0))
 
     def get_int(self, s, pos):
         pos0 = pos
         while pos < len(s) and s[pos].isdigit(): pos += 1
         return (int(s[pos0:pos]), pos)
+
+    def get_string(self, s, pos):
+        str = ''
+        while pos < len(s) and ord(s[pos]) is not 0:
+            str += s[pos]
+            pos += 1
+        return (str, pos)
 
     def from_binary(self, bin):
         pos = 0
@@ -214,7 +231,12 @@ class PersistentPuzzle:
 
         count = width*height
         bin1 = bin[pos:pos+count]
-        bin2 = bin[pos+count:]
+        pos += count
+        bin2 = bin[pos:pos+count]
+        pos += count
+
+        pos += 1
+        (self.notes, pos) = self.get_string(bin, pos)
 
         self.responses = {}
         self.errors = {}
@@ -235,9 +257,20 @@ class Puzzle:
         f = BinaryFile(filename)
         self.f = f
 
+        cksum = f.read_short()
+        file_magic = f.read_string()
+        assert(file_magic == "ACROSS&DOWN")
+
+        cksum_cib = f.read_short()
+        magic_10 = f.read_chars(4)
+        magic_14 = f.read_chars(4)
+        # most puzzles are v 1.2, cryptic puzzles are 1.3
+        puz_version = f.read_string()
+
         f.seek(0x2c)
         self.width = f.read_byte()
         self.height = f.read_byte()
+        self.clue_count = f.read_short()
 
         f.seek(0x34)
         self.answers = {}
@@ -266,12 +299,12 @@ class Puzzle:
         self.copyright = massage(f.read_string())
 
         self.clues = []
-        clue = f.read_string()
-        while clue:
-            self.clues.append(clue)
-            clue = f.read_string()
+        for n in range(self.clue_count):
+            self.clues.append(f.read_string())
 
         self.all_clues = self.clues[:]
+
+        self.notes = f.read_string()
 
         self.setup()
 
@@ -287,6 +320,7 @@ class Puzzle:
         self.is_across = {}
         self.is_down = {}
         number = 1
+        used_number = False
         for y in range(self.height):
             for x in range(self.width):
                 is_fresh_x = self.is_black(x-1, y)
@@ -294,27 +328,30 @@ class Puzzle:
 
                 if not self.is_black(x, y):
                     if is_fresh_x:
-                        self.across_map[x, y] = number
                         if self.is_black(x+1, y):
-                            self.across_clues[number] = ''
+                            self.across_map[x, y] = 0
                         else:
+                            self.across_map[x, y] = number
                             self.across_clues[number] = self.clues.pop(0)
+                            used_number = True
                     else: self.across_map[x, y] = self.across_map[x-1, y]
-                    
+
                     if is_fresh_y:
-                        self.down_map[x, y] = number
                         if self.is_black(x, y+1): # see April 30, 2006 puzzle
-                            self.down_clues[number] = ''
+                            self.down_map[x, y] = 0
                         else:
+                            self.down_map[x, y] = number
                             self.down_clues[number] = self.clues.pop(0)
+                            used_number = True
                     else: self.down_map[x, y] = self.down_map[x, y-1]
 
-                    if is_fresh_x or is_fresh_y:
+                    if used_number:
                         self.is_across[number] = is_fresh_x
                         self.is_down[number] = is_fresh_y
                         self.number_map[number] = (x, y)
                         self.number_rev_map[x, y] = number
                         number += 1
+                        used_number = False
                 else:
                     self.across_map[x, y] = 0
                     self.down_map[x, y] = 0
@@ -1001,6 +1038,13 @@ class PuzzleController:
         return sel
 
     def switch_mode(self):
+        if self.mode is ACROSS:
+            if not self.puzzle.down_map[self.x, self.y]:
+                return
+        if self.mode is DOWN:
+            if not self.puzzle.across_map[self.x, self.y]:
+                return
+
         self.mode = 1-self.mode
 
         old_sel = self.selection
@@ -1015,6 +1059,13 @@ class PuzzleController:
         if not self.puzzle.is_black(x, y):
             self.x = x
             self.y = y
+
+            if self.mode is ACROSS:
+                if not self.puzzle.across_map[self.x, self.y]:
+                    self.switch_mode()
+            if self.mode is DOWN:
+                if not self.puzzle.down_map[self.x, self.y]:
+                    self.switch_mode()
 
             old_sel = self.selection
             self.selection = self.get_selection()
@@ -1186,6 +1237,29 @@ class DummyController:
     def get_clues(self, mode):
         return []
 
+
+class RecentList:
+    def __init__(self):
+        self.max_entries = 5
+        self.recent_list = []
+
+    def add(self,newentry):
+        self.delete(newentry)
+        self.recent_list.insert(0,newentry)
+        if len(self.recent_list) > self.max_entries:
+            del self.recent_list[-1]
+
+    def delete(self,newentry):
+        if newentry in self.recent_list:
+            try:
+                self.recent_list.remove(newentry)
+            except ValueError:
+                pass
+
+    def set(self, newlist=[]):
+        self.recent_list = newlist
+
+
 class PuzzleWindow:
     def __init__(self, puzzle):
         self.clock_time = 0.0
@@ -1196,6 +1270,9 @@ class PuzzleWindow:
 
         if self.puzzle: self.control = PuzzleController(self.puzzle)
         else: self.control = DummyController()
+
+        self.recent_menu = gtk.Menu()
+        self.recent = RecentList()
 
         self.skip_filled = False
         self.layout = 0
@@ -1232,6 +1309,7 @@ class PuzzleWindow:
         menubox = gtk.VBox()
         self.menubar = self.create_menubar()
         menubox.pack_start(self.menubar, False, False, 0)
+        self.update_recent_menu()
 
         win.add(menubox)
 
@@ -1299,8 +1377,14 @@ class PuzzleWindow:
         
         if self.puzzle: self.write_puzzle()
 
-        self.set_puzzle(Puzzle(fname), start_over)
+        try:
+            self.set_puzzle(Puzzle(fname), start_over)
+        except:
+            self.notify("%s could not be loaded" % fname)
+            return
         self.last_file = fname
+        self.recent.add(fname)
+        self.update_recent_menu()
         self.control = PuzzleController(self.puzzle)
         self.setup_controller()
         self.clue_widget.set_controller(self.control)
@@ -1309,7 +1393,7 @@ class PuzzleWindow:
         self.load_list(ACROSS)
         self.load_list(DOWN)
         self.enable_controls(True)
-        if has_osso:
+        if has_hildon:
             self.notify("Opened puzzle '" + self.puzzle.title + "'")
 
         self.idle_event()
@@ -1323,7 +1407,7 @@ class PuzzleWindow:
         try: os.mkdir(dir)
         except OSError: pass
 
-        return dir + '/' + puzzle.hashcode()
+        return dir + os.sep + puzzle.hashcode()
 
     def clear_puzzle(self):
         if self.last_file: self.do_open_file(self.last_file, True)
@@ -1335,6 +1419,8 @@ class PuzzleWindow:
             
             self.puzzle.responses = pp.responses
             self.puzzle.errors = pp.errors
+            if len(pp.notes) > 0:
+                self.puzzle.notes = pp.notes
             self.clock_time = pp.clock
         except:
             self.notify('The saved puzzle is corrupted. It will not be used.')
@@ -1367,6 +1453,8 @@ class PuzzleWindow:
             self.clock_time += (time.time() - self.clock_start)
         pp.clock = self.clock_time
 
+        pp.notes = self.puzzle.notes
+
         fname = self.get_puzzle_file(self.puzzle)
         f = file(fname, 'w+')
         f.write(pp.to_binary())
@@ -1378,9 +1466,8 @@ class PuzzleWindow:
         gtk.main_quit()
 
     def notify(self, msg):
-        if has_osso:
-            note = osso.SystemNote(osso_c)
-            note.system_note_infoprint(msg)
+        if has_hildon:
+            hildon.hildon_banner_show_information(self.win, None, msg)
         else:
             dialog = gtk.MessageDialog(parent=self.win,
                                        type=gtk.MESSAGE_INFO,
@@ -1437,6 +1524,26 @@ class PuzzleWindow:
         close_button.grab_focus()
         show_props.run()
         show_props.destroy()
+
+    def show_notepad(self):
+        notepad = gtk.Dialog('Notepad', self.win)
+        notepad.set_has_separator(False)
+        notepad.set_resizable(True)
+        textbuf = gtk.TextBuffer()
+        textbuf.set_text(self.puzzle.notes)
+        textview = gtk.TextView(textbuf)
+        scrollwin = gtk.ScrolledWindow()
+        scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        scrollwin.add(textview)
+        notepad.vbox.pack_start(scrollwin, True, True, 0)
+        notepad.vbox.show_all()
+        close_button = notepad.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
+        close_button.grab_focus()
+        notepad.set_size_request(650, 350)
+        notepad.run()
+        (start, end) = textbuf.get_bounds()
+        self.puzzle.notes = textbuf.get_slice(start, end, True)
+        notepad.destroy()
 
     def show_about(self):
         # Help > About
@@ -1592,6 +1699,19 @@ class PuzzleWindow:
         if not self.maximized:
             self.window_size = self.win.get_size()
 
+    def update_recent_menu(self):
+        for child in self.recent_menu.get_children():
+            self.recent_menu.remove(child)
+        if len(self.recent.recent_list) == 0:
+            self.menu_items['recent'].set_property('sensitive', False)
+        else:
+            self.menu_items['recent'].set_property('sensitive', True)
+            for item in self.recent.recent_list:
+                m = gtk.MenuItem(item.split(os.sep)[-1])
+                m.connect('activate', self.menu_selected, 'recent', item)
+                self.recent_menu.append(m)
+        self.recent_menu.show_all()
+
     def create_menubar(self):
         accel = gtk.AccelGroup()
 
@@ -1627,6 +1747,9 @@ class PuzzleWindow:
         file_menu.set_submenu(menu)
 
         append(menu, 'open', create_menu_item('Open', MENU_OPEN, 'O'))
+        item = create_menu_item('Recent', 0)
+        item.set_submenu(self.recent_menu)
+        append(menu, 'recent', item)
         append(menu, 'save', create_menu_item('Save', MENU_SAVE, 'S'))
         if has_print:
             append(menu, 'print', create_menu_item('Print...', MENU_PRINT, 'P'))
@@ -1645,6 +1768,7 @@ class PuzzleWindow:
         append(menu, 'check_puzzle', create_menu_item('Check Puzzle', 'Check Puzzle'))
         append(menu, 'solve_word', create_menu_item('Solve Word', 'Solve Word'))
         append(menu, 'clear_puzzle', create_menu_item('Clear Puzzle', 'Clear Puzzle'))
+        append(menu, 'notepad', create_menu_item('Notepad...', 'notepad'))
 
         prefs_menu = gtk.MenuItem('Preferences')
         menubar.append(prefs_menu)
@@ -1700,7 +1824,7 @@ class PuzzleWindow:
         self.win.add_accel_group(accel)
         return menubar
 
-    def menu_selected(self, item, action):
+    def menu_selected(self, item, action, extra=None):
         if action == MENU_QUIT:
             self.exit()
         elif action == MENU_CLOSE:
@@ -1709,6 +1833,8 @@ class PuzzleWindow:
             self.skip_filled = not self.skip_filled
         elif action == MENU_OPEN:
             self.open_file()
+        elif action == 'recent':
+            self.open_recent(extra)
         elif action == MENU_SAVE:
             self.save_file()
         elif action == MENU_PRINT:
@@ -1721,6 +1847,8 @@ class PuzzleWindow:
             self.control.solve_word()
         elif action == 'Clear Puzzle':
             self.clear_puzzle()
+        elif action == 'notepad':
+            self.show_notepad()
         elif action == 'properties':
             self.show_properties()
         elif action == 'about':
@@ -1852,14 +1980,20 @@ class PuzzleWindow:
     def across_update(self, an):
         if self.tree_paths.has_key(ACROSS):
             selection = self.trees[ACROSS].get_selection()
-            selection.select_path(self.tree_paths[ACROSS][an])
-            self.trees[ACROSS].scroll_to_cell(self.tree_paths[ACROSS][an])
+            if an:
+                selection.select_path(self.tree_paths[ACROSS][an])
+                self.trees[ACROSS].scroll_to_cell(self.tree_paths[ACROSS][an])
+            else:
+                selection.unselect_all()
 
     def down_update(self, dn):
         if self.tree_paths.has_key(DOWN):
             selection = self.trees[DOWN].get_selection()
-            selection.select_path(self.tree_paths[DOWN][dn])
-            self.trees[DOWN].scroll_to_cell(self.tree_paths[DOWN][dn])
+            if dn:
+                selection.select_path(self.tree_paths[DOWN][dn])
+                self.trees[DOWN].scroll_to_cell(self.tree_paths[DOWN][dn])
+            else:
+                selection.unselect_all()
 
     def idle_event(self):
         t = time.time()
@@ -1965,7 +2099,7 @@ class PuzzleWindow:
             dlg.connect('destroy', lambda w: dlg.destroy())
             dlg.ok_button.connect('clicked', open_cb, dlg)
             dlg.cancel_button.connect('clicked', lambda w: dlg.destroy())
-            if self.default_loc: dlg.set_filename(self.default_loc + '/')
+            if self.default_loc: dlg.set_filename(self.default_loc + os.sep)
             dlg.show()
         else:
             if has_hildon:
@@ -1996,7 +2130,7 @@ class PuzzleWindow:
             dlg.connect('destroy', lambda w: dlg.destroy())
             dlg.ok_button.connect('clicked', save_cb, dlg)
             dlg.cancel_button.connect('clicked', lambda w: dlg.destroy())
-            if self.default_loc: dlg.set_filename(self.default_loc + '/')
+            if self.default_loc: dlg.set_filename(self.default_loc + os.sep)
             dlg.show()
         else:
             if has_hildon:
@@ -2016,6 +2150,15 @@ class PuzzleWindow:
                 save_cb(None, dlg)
             else:
                 dlg.destroy()
+
+    def open_recent(self, filename):
+        if filename != None:
+            if os.path.exists(filename):
+                self.do_open_file(filename)
+            else:
+                self.notify('File not found.')
+                self.recent.delete(filename)
+                self.update_recent_menu()
 
     def print_puzzle(self):
         if has_print:
@@ -2047,6 +2190,8 @@ class PuzzleWindow:
                 self.last_file = eval(c.get('options', 'last_file'))
             if c.has_option('options', 'min_box_size'):
                 self.min_box_size = c.getint('options', 'min_box_size')
+            if c.has_option('options', 'recent_list'):
+                self.recent.set(eval(c.get('options', 'recent_list')));
 
     def write_config(self):
         c = ConfigParser.ConfigParser()
@@ -2060,6 +2205,7 @@ class PuzzleWindow:
         c.set('options', 'default_loc', repr(self.default_loc))
         c.set('options', 'last_file', repr(self.last_file))
         c.set('options', 'min_box_size', self.min_box_size)
+        c.set('options', 'recent_list', repr(self.recent.recent_list))
         c.write(file(os.path.expanduser('~/.crossword.cfg'), 'w'))
 
 
@@ -2078,10 +2224,13 @@ if __name__ == '__main__':
         osso_rpc.set_rpc_callback("org.maemo.xword", "/org/maemo/xword",
                                   "org.maemo.xword", osso_callback, osso_c)
 
-    if len(sys.argv) <> 2:
-        p = None
-    else:
-        p = Puzzle(sys.argv[1])
-        
+    p = None
+    if len(sys.argv) == 2 and os.path.exists(sys.argv[1]):
+        try:
+            p = Puzzle(sys.argv[1])
+        except:
+            print "%s could not be loaded" % sys.argv[1]
+            p = None
+
     w = PuzzleWindow(p)
     gtk.main()
