@@ -1,6 +1,7 @@
-root/usr/share/applications/hildon/xword.desktop usr/share/applications/hildon/
-root/usr/share/dbus-1/services/xword.service usr/share/dbus-1/services/
-root/usr/share/icons/hicolor/26x26/apps/xword.png usr/share/icons/hicolor/26x26/apps/
-root/usr/share/icons/hicolor/scalable/apps/xword.png usr/share/icons/hicolor/scalable/apps/
-root/usr/share/xword/* usr/share/xword/
-root/usr/bin/xword usr/bin
+data/xword.desktop usr/share/applications/hildon/
+data/xword.service usr/share/dbus-1/services/
+data/icons/hicolor/26x26/apps/xword.png usr/share/icons/hicolor/26x26/apps/
+data/icons/hicolor/scalable/apps/xword.png usr/share/icons/hicolor/scalable/apps/
+data/*.png usr/share/xword/
+data/*.xpm usr/share/xword/
+xword usr/bin

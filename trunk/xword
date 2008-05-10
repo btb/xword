@@ -68,7 +68,7 @@ import pickle
 import ConfigParser
 
 HOME_PATH = '/usr/share/xword'
-if os.path.exists('../share/xword/check.xpm'): HOME_PATH = '../share/xword'
+if os.path.exists('data/check.xpm'): HOME_PATH = 'data'
 CHECK_ICON = HOME_PATH + '/crossword-check.png'
 CHECK_ALL_ICON = HOME_PATH + '/crossword-check-all.png'
 SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
