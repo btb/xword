@@ -1239,6 +1239,29 @@ class DummyController:
     def get_clues(self, mode):
         return []
 
+
+class RecentList:
+    def __init__(self):
+        self.max_entries = 5
+        self.recent_list = []
+
+    def add(self,newentry):
+        self.delete(newentry)
+        self.recent_list.insert(0,newentry)
+        if len(self.recent_list) > self.max_entries:
+            del self.recent_list[-1]
+
+    def delete(self,newentry):
+        if newentry in self.recent_list:
+            try:
+                self.recent_list.remove(newentry)
+            except ValueError:
+                pass
+
+    def set(self, newlist=[]):
+        self.recent_list = newlist
+
+
 class PuzzleWindow:
     def __init__(self, puzzle):
         self.clock_time = 0.0
@@ -1249,6 +1272,9 @@ class PuzzleWindow:
 
         if self.puzzle: self.control = PuzzleController(self.puzzle)
         else: self.control = DummyController()
+
+        self.recent_menu = gtk.Menu()
+        self.recent = RecentList()
 
         self.skip_filled = False
         self.layout = 0
@@ -1285,6 +1311,7 @@ class PuzzleWindow:
         menubox = gtk.VBox()
         self.menubar = self.create_menubar()
         menubox.pack_start(self.menubar, False, False, 0)
+        self.update_recent_menu()
 
         win.add(menubox)
 
@@ -1366,6 +1393,8 @@ class PuzzleWindow:
             self.notify("%s could not be loaded" % fname)
             return
         self.last_file = fname
+        self.recent.add(fname)
+        self.update_recent_menu()
         self.control = PuzzleController(self.puzzle)
         self.setup_controller()
         self.clue_widget.set_controller(self.control)
@@ -1388,7 +1417,7 @@ class PuzzleWindow:
         try: os.mkdir(dir)
         except OSError: pass
 
-        return dir + '/' + puzzle.hashcode()
+        return dir + os.sep + puzzle.hashcode()
 
     def clear_puzzle(self):
         if self.last_file: self.do_open_file(self.last_file, True)
@@ -1688,6 +1717,19 @@ class PuzzleWindow:
         if not self.maximized:
             self.window_size = self.win.get_size()
 
+    def update_recent_menu(self):
+        for child in self.recent_menu.get_children():
+            self.recent_menu.remove(child)
+        if len(self.recent.recent_list) == 0:
+            self.menu_items['recent'].set_property('sensitive', False)
+        else:
+            self.menu_items['recent'].set_property('sensitive', True)
+            for item in self.recent.recent_list:
+                m = gtk.MenuItem(item.split(os.sep)[-1])
+                m.connect('activate', self.menu_selected, 'recent', item)
+                self.recent_menu.append(m)
+        self.recent_menu.show_all()
+
     def create_menubar(self):
         accel = gtk.AccelGroup()
 
@@ -1723,6 +1765,9 @@ class PuzzleWindow:
         file_menu.set_submenu(menu)
 
         append(menu, 'open', create_menu_item('Open', MENU_OPEN, 'O'))
+        item = create_menu_item('Recent', 0)
+        item.set_submenu(self.recent_menu)
+        append(menu, 'recent', item)
         append(menu, 'save', create_menu_item('Save', MENU_SAVE, 'S'))
         if has_print:
             append(menu, 'print', create_menu_item('Print...', MENU_PRINT, 'P'))
@@ -1797,7 +1842,7 @@ class PuzzleWindow:
         self.win.add_accel_group(accel)
         return menubar
 
-    def menu_selected(self, item, action):
+    def menu_selected(self, item, action, extra=None):
         if action == MENU_QUIT:
             self.exit()
         elif action == MENU_CLOSE:
@@ -1806,6 +1851,8 @@ class PuzzleWindow:
             self.skip_filled = not self.skip_filled
         elif action == MENU_OPEN:
             self.open_file()
+        elif action == 'recent':
+            self.open_recent(extra)
         elif action == MENU_SAVE:
             self.save_file()
         elif action == MENU_PRINT:
@@ -2095,7 +2142,7 @@ class PuzzleWindow:
             dlg.connect('destroy', lambda w: dlg.destroy())
             dlg.ok_button.connect('clicked', open_cb, dlg)
             dlg.cancel_button.connect('clicked', lambda w: dlg.destroy())
-            if self.default_loc: dlg.set_filename(self.default_loc + '/')
+            if self.default_loc: dlg.set_filename(self.default_loc + os.sep)
             dlg.show()
         else:
             if has_hildon:
@@ -2126,7 +2173,7 @@ class PuzzleWindow:
             dlg.connect('destroy', lambda w: dlg.destroy())
             dlg.ok_button.connect('clicked', save_cb, dlg)
             dlg.cancel_button.connect('clicked', lambda w: dlg.destroy())
-            if self.default_loc: dlg.set_filename(self.default_loc + '/')
+            if self.default_loc: dlg.set_filename(self.default_loc + os.sep)
             dlg.show()
         else:
             if has_hildon:
@@ -2146,6 +2193,15 @@ class PuzzleWindow:
                 save_cb(None, dlg)
             else:
                 dlg.destroy()
+
+    def open_recent(self, filename):
+        if filename != None:
+            if os.path.exists(filename):
+                self.do_open_file(filename)
+            else:
+                self.notify('File not found.')
+                self.recent.delete(filename)
+                self.update_recent_menu()
 
     def print_puzzle(self):
         if has_print:
@@ -2177,6 +2233,8 @@ class PuzzleWindow:
                 self.last_file = eval(c.get('options', 'last_file'))
             if c.has_option('options', 'min_box_size'):
                 self.min_box_size = c.getint('options', 'min_box_size')
+            if c.has_option('options', 'recent_list'):
+                self.recent.set(eval(c.get('options', 'recent_list')));
 
     def write_config(self):
         c = ConfigParser.ConfigParser()
@@ -2190,6 +2248,7 @@ class PuzzleWindow:
         c.set('options', 'default_loc', repr(self.default_loc))
         c.set('options', 'last_file', repr(self.last_file))
         c.set('options', 'min_box_size', self.min_box_size)
+        c.set('options', 'recent_list', repr(self.recent.recent_list))
         c.write(file(os.path.expanduser('~/.crossword.cfg'), 'w'))
 
 
