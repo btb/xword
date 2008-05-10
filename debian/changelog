@@ -1,8 +1,9 @@
 xword (1.0.7) stable; urgency=low
 
   * Use HildonBanner for notifications
+  * Add simple recent list
 
- -- Bradley Bell <bradleyb@u.washington.edu>  Wed, 30 Apr 2008 19:55:35 -0700
+ -- Bradley Bell <bradleyb@u.washington.edu>  Fri, 09 May 2008 17:13:05 -0700
 
 xword (1.0.6) stable; urgency=low
 
