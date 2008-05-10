@@ -1241,43 +1241,25 @@ class DummyController:
 
 
 class RecentList:
-    def __init__(self, parent):
+    def __init__(self):
         self.max_entries = 5
-        self.parent = parent
         self.recent_list = []
-        self.update_menu()
 
     def add(self,newentry):
         self.delete(newentry)
         self.recent_list.insert(0,newentry)
         if len(self.recent_list) > self.max_entries:
             del self.recent_list[-1]
-        self.update_menu()
 
     def delete(self,newentry):
         if newentry in self.recent_list:
             try:
                 self.recent_list.remove(newentry)
-                self.update_menu()
             except ValueError:
                 pass
 
     def set(self, newlist=[]):
         self.recent_list = newlist
-        self.update_menu()
-
-    def update_menu(self):
-        for child in self.parent.recent_menu.get_children():
-            self.parent.recent_menu.remove(child)
-        if len(self.recent_list) == 0:
-            emptymenu = gtk.MenuItem('Empty')
-            self.parent.recent_menu.append(emptymenu)
-        else:
-            for item in self.recent_list:
-                m = gtk.MenuItem(item.split(os.sep)[-1])
-                m.connect('activate', self.parent.menu_selected, 'recent', item)
-                self.parent.recent_menu.append(m)
-        self.parent.recent_menu.show_all()
 
 
 class PuzzleWindow:
@@ -1292,7 +1274,7 @@ class PuzzleWindow:
         else: self.control = DummyController()
 
         self.recent_menu = gtk.Menu()
-        self.recent = RecentList(self)
+        self.recent = RecentList()
 
         self.skip_filled = False
         self.layout = 0
@@ -1329,6 +1311,7 @@ class PuzzleWindow:
         menubox = gtk.VBox()
         self.menubar = self.create_menubar()
         menubox.pack_start(self.menubar, False, False, 0)
+        self.update_recent_menu()
 
         win.add(menubox)
 
@@ -1381,7 +1364,6 @@ class PuzzleWindow:
         def enable(w): w.set_property('sensitive', enabled)
         
         enable(self.menu_items['save'])
-        enable(self.menu_items['recent'])
         enable(self.menu_items['properties'])
         if has_print:
             enable(self.menu_items['print'])
@@ -1412,6 +1394,7 @@ class PuzzleWindow:
             return
         self.last_file = fname
         self.recent.add(fname)
+        self.update_recent_menu()
         self.control = PuzzleController(self.puzzle)
         self.setup_controller()
         self.clue_widget.set_controller(self.control)
@@ -1733,6 +1716,19 @@ class PuzzleWindow:
     def resize_window(self, widget, allocation):
         if not self.maximized:
             self.window_size = self.win.get_size()
+
+    def update_recent_menu(self):
+        for child in self.recent_menu.get_children():
+            self.recent_menu.remove(child)
+        if len(self.recent.recent_list) == 0:
+            self.menu_items['recent'].set_property('sensitive', False)
+        else:
+            self.menu_items['recent'].set_property('sensitive', True)
+            for item in self.recent.recent_list:
+                m = gtk.MenuItem(item.split(os.sep)[-1])
+                m.connect('activate', self.menu_selected, 'recent', item)
+                self.recent_menu.append(m)
+        self.recent_menu.show_all()
 
     def create_menubar(self):
         accel = gtk.AccelGroup()
@@ -2205,6 +2201,7 @@ class PuzzleWindow:
             else:
                 self.notify('File not found.')
                 self.recent.delete(filename)
+                self.update_recent_menu()
 
     def print_puzzle(self):
         if has_print:
