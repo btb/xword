@@ -89,7 +89,6 @@ CHEAT = 3
 MENU_OPEN = 1
 MENU_SAVE = 2
 MENU_PRINT = 3
-MENU_CLOSE = 4
 MENU_QUIT = 5
 
 MENU_SKIP = 10
@@ -1183,7 +1182,8 @@ class PuzzleController:
 
 class DummyController:
     def __init__(self):
-        pass
+        self.x = 0
+        self.y = 0
 
     def connect(self, ev, handler):
         pass
@@ -1365,9 +1365,15 @@ class PuzzleWindow:
 
     def enable_controls(self, enabled):
         def enable(w): w.set_property('sensitive', enabled)
-        
+
         enable(self.menu_items['save'])
         enable(self.menu_items['properties'])
+        enable(self.menu_items['check_word'])
+        enable(self.menu_items['check_puzzle'])
+        enable(self.menu_items['solve_word'])
+        enable(self.menu_items['clear_puzzle'])
+        enable(self.menu_items['notepad'])
+        
         if has_print:
             enable(self.menu_items['print'])
         enable(self.toolbar_items['Check Word'])
@@ -1774,7 +1780,6 @@ class PuzzleWindow:
             append(menu, 'print', create_menu_item('Print...', MENU_PRINT, 'P'))
         append(menu, 'properties', create_menu_item('Properties...', 'properties'))
         append(menu, '', gtk.SeparatorMenuItem())
-        append(menu, 'close', create_menu_item('Close', MENU_CLOSE, 'W'))
         append(menu, 'quit', create_menu_item('Quit', MENU_QUIT, 'Q'))
 
         puzzle_menu = gtk.MenuItem('Puzzle')
@@ -1845,8 +1850,6 @@ class PuzzleWindow:
 
     def menu_selected(self, item, action, extra=None):
         if action == MENU_QUIT:
-            self.exit()
-        elif action == MENU_CLOSE:
             self.exit()
         elif action == MENU_SKIP:
             self.skip_filled = not self.skip_filled
