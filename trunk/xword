@@ -1351,6 +1351,9 @@ class PuzzleWindow:
                 child.reparent(menu)
             self.win.set_menu(menu)
             self.menubar.destroy()
+        else:
+            self.status_bar = gtk.Statusbar()
+            menubox.pack_start(self.status_bar, False, False, 0)
 
         win.show_all()
 
@@ -1403,8 +1406,7 @@ class PuzzleWindow:
         self.load_list(ACROSS)
         self.load_list(DOWN)
         self.enable_controls(True)
-        if has_hildon:
-            self.notify("Opened puzzle '" + self.puzzle.title + "'")
+        self.notify("Opened puzzle '" + self.puzzle.title + "'")
 
         self.idle_event()
 
@@ -1479,12 +1481,7 @@ class PuzzleWindow:
         if has_hildon:
             hildon.hildon_banner_show_information(self.win, None, msg)
         else:
-            dialog = gtk.MessageDialog(parent=self.win,
-                                       type=gtk.MESSAGE_INFO,
-                                       buttons=gtk.BUTTONS_OK,
-                                       message_format=msg)
-            dialog.connect("response", lambda dlg, resp: dlg.destroy())
-            dialog.show()
+            self.status_bar.push(self.status_bar.get_context_id('stat'), msg)
 
     def ask(self, msg, opts):
         dialog = gtk.MessageDialog(parent=self.win,
