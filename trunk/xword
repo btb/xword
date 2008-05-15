@@ -68,7 +68,7 @@ import pickle
 import ConfigParser
 
 HOME_PATH = '/usr/share/xword'
-if os.path.exists('data/check.xpm'): HOME_PATH = 'data'
+if os.path.exists('data/Left.xpm'): HOME_PATH = 'data'
 CHECK_ICON = HOME_PATH + '/crossword-check.png'
 CHECK_ALL_ICON = HOME_PATH + '/crossword-check-all.png'
 SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
@@ -1961,29 +1961,11 @@ class PuzzleWindow:
         letterbar.set_orientation(gtk.ORIENTATION_VERTICAL)
 
         for item in itemlist:
-            if item == 'Left': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/left.xpm'),None)
-            elif item == 'Right': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/right.xpm'),None)
-            elif item == 'Up': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/up.xpm'),None)
-            elif item == 'Down': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/down.xpm'),None)
-            elif item == 'BackSpace': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/backspace.xpm'),None)
-            elif item == 'Return': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/swap.xpm'),None)
-            elif item == 'Tab': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/nextword.xpm'),None)
-            elif item == 'ISO_Left_Tab': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/prevword.xpm'),None)
-            elif item == 'Escape': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/check.xpm'),None)
-            elif item == 'F12': button = gtk.ToolButton(
-                         self.load_icon(HOME_PATH+'/solve.xpm'),None)
-            else:
+            if len(item) == 1:
                 button = gtk.ToolButton(None,item)
-
+            else:
+                button = gtk.ToolButton(self.load_icon(HOME_PATH+
+                         '/' + item + '.xpm'),None)
             button.connect('clicked',self.letterbar_event,item)
             letterbar.insert(button,-1)
 
