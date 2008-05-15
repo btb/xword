@@ -63,9 +63,9 @@
     <p>
     Now, <a href="https://garage.maemo.org/frs/?group_id=620">install
     the latest version of the xword.deb file</a>.  If the program does
-    not install correctly, you may need to enable <a
-    href="http://maemo.org/community/wiki/ApplicationManagerRedPillMode/">Red
-    Pill mode</a>.  Alternatively, you can open an xterm and
+    not install correctly, you may need to <a
+    href="http://maemo.org/community/wiki/ApplicationManagerRedPillMode/">enable
+    Red Pill mode</a>.  Alternatively, you can open an xterm and
     install everything manually as root.  To do this, SAVE the latest
     xword.deb to your NIT and then run the following commands in a terminal.
     </p>
@@ -121,8 +121,13 @@
     <b>File</b>
     <blockquote>
       <ul>
-        <li><b>Open</b> - Open a .puz file
+        <li><b>Open</b> - Open a .puz file.
         </li>
+        <!--
+        <li><b>Recent</b> - Show a list of the last five .puz files
+        opened.  This allows you to quickly (re)open recent puzzles.
+        </li>
+        -->
         <li><b>Save</b> - Save the state of the current puzzle.  This is
         not strictly necessary since the state of the puzzle gets saved
         automatically when you exit the program.
@@ -329,11 +334,11 @@
     </p>
     <blockquote>
     <code>
-      svn checkout https://garage.maemo.org/svn/xword/trunk/root/usr/
+      svn checkout https://garage.maemo.org/svn/xword/trunk/
     </code>
     </blockquote>
     <p>
-    Change into the newly created "<tt>usr/bin/</tt>" directory and run the
+    Change into the newly created "<tt>trunk/</tt>" directory and run the
     "<tt>xword</tt>" program you find there.  For Windows, you may need to
     rename "<tt>xword</tt>" to "<tt>xword.py</tt>" to be able to run it by
     double-clicking.
@@ -357,7 +362,7 @@
     <hr/>
 
     <div align="center">
-    Last update: May 6, 2008
+    Last update: May 15, 2008
     </div>
 
   </body>
