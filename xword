@@ -1306,7 +1306,7 @@ class PuzzleWindow:
         if self.maximized: win.maximize()
 
         self.cur_layout = None
-        self.letterbar1 = None
+        self.letterbox = None
 
         menubox = gtk.VBox()
         self.menubar = self.create_menubar()
@@ -1322,12 +1322,7 @@ class PuzzleWindow:
         self.box.pack_start(self.toolbox, False, False, 0)
 
         self.toolbar = self.create_toolbar()
-        self.letterbar1 = self.create_letterbar(['A','D','G','J','M','P',
-            'S','V','Y','ISO_Left_Tab','Left','F12'])
-        self.letterbar2 = self.create_letterbar(['B','E','H','K','N','Q',
-            'T','W','Z','Up','Return','Down'])
-        self.letterbar3 = self.create_letterbar(['C','F','I','L','O','R',
-            'U','X','BackSpace','Tab','Right','Escape'])
+        self.letterbox = self.create_letterbox()
 
         self.create_widgets()
         self.setup_controller()
@@ -1695,7 +1690,7 @@ class PuzzleWindow:
                 if w is widget: return name
 
     def set_toolbar_layout(self, index):
-        if not self.letterbar1: return
+        if not self.letterbox: return
 
         self.toolbar_layout = index
         for child in self.toolbox.get_children():
@@ -1704,9 +1699,7 @@ class PuzzleWindow:
         if toolbar_layouts[index][1] == 'checks':
             self.toolbox.pack_start(self.toolbar,False,False,0)
         elif toolbar_layouts[index][1] == 'keyboard':
-            self.toolbox.pack_start(self.letterbar1,False,False,0)
-            self.toolbox.pack_start(self.letterbar2,False,False,0)
-            self.toolbox.pack_start(self.letterbar3,False,False,0)
+            self.toolbox.pack_start(self.letterbox,False,False,0)
 
         if toolbar_layouts[index][2] == 'L':
             self.box.reorder_child(self.toolbox,0)
@@ -1955,21 +1948,34 @@ class PuzzleWindow:
         img.set_from_file(filename)
         return img
 
-    def create_letterbar(self,itemlist):
-        letterbar = gtk.Toolbar()
-        letterbar.set_style(gtk.TOOLBAR_ICONS)
-        letterbar.set_orientation(gtk.ORIENTATION_VERTICAL)
+    def create_letterbox(self):
+        scrolled = gtk.ScrolledWindow()
+        scrolled.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
+        table = gtk.Table(12, 3, True)
+        scrolled.add_with_viewport(table)
 
-        for item in itemlist:
-            if len(item) == 1:
-                button = gtk.ToolButton(None,item)
-            else:
-                button = gtk.ToolButton(self.load_icon(HOME_PATH+
-                         '/' + item + '.xpm'),None)
-            button.connect('clicked',self.letterbar_event,item)
-            letterbar.insert(button,-1)
+        itemlist = [
+            ['A','D','G','J','M','P','S','V','Y','ISO_Left_Tab','Left','F12'],
+            ['B','E','H','K','N','Q','T','W','Z','Up','Return','Down'],
+            ['C','F','I','L','O','R','U','X','BackSpace','Tab','Right','Escape']
+            ]
 
-        return letterbar
+        x = 0
+        for col in itemlist:
+            y = 0
+            for item in col:
+                if len(item) == 1:
+                    button = gtk.ToolButton(None,item)
+                else:
+                    button = gtk.ToolButton(self.load_icon(
+                             HOME_PATH + '/' + item + '.xpm'),None)
+
+                button.connect('clicked',self.letterbox_event,item)
+                table.attach(button, x, x+1, y, y+1)
+                y += 1
+            x += 1
+
+        return scrolled
 
     def create_list(self, mode):
         if mode == ACROSS: label = 'Across'
@@ -2053,7 +2059,7 @@ class PuzzleWindow:
             else:
                 self.clock_time += (time.time() - self.clock_start)
 
-    def letterbar_event(self, widget, event):
+    def letterbox_event(self, widget, event):
         keypress = gtk.gdk.Event(gtk.gdk.KEY_PRESS)
         keypress.keyval = int(gtk.gdk.keyval_from_name(event))
         if len(event) is 1 and event.isalpha():
