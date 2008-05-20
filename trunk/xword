@@ -67,13 +67,13 @@ import md5
 import pickle
 import ConfigParser
 
-HOME_PATH = '/usr/share/xword'
-if os.path.exists('data/Left.xpm'): HOME_PATH = 'data'
-CHECK_ICON = HOME_PATH + '/crossword-check.png'
-CHECK_ALL_ICON = HOME_PATH + '/crossword-check-all.png'
-SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
-TIMER_ICON = HOME_PATH + '/crossword-clock.png'
-ABOUT_ICON = HOME_PATH + '/xword-logo2.png'
+HOME_PATH = os.sep+'usr'+os.sep+'share'+os.sep+'xword'
+if os.path.exists('data'+os.sep+'Left.xpm'): HOME_PATH = 'data'
+CHECK_ICON = HOME_PATH + os.sep + 'crossword-check.png'
+CHECK_ALL_ICON = HOME_PATH + os.sep + 'crossword-check-all.png'
+SOLVE_ICON = HOME_PATH + os.sep + 'crossword-solve.png'
+TIMER_ICON = HOME_PATH + os.sep + 'crossword-clock.png'
+ABOUT_ICON = HOME_PATH + os.sep + 'xword-logo2.png'
 
 MIN_BOX_SIZE = 12 
 MAX_BOX_SIZE = 40
@@ -1416,7 +1416,7 @@ class PuzzleWindow:
         self.puzzle.save(fname)
 
     def get_puzzle_file(self, puzzle):
-        dir = os.path.expanduser('~/.crossword_puzzles')
+        dir = os.path.expanduser('~' + os.sep + '.crossword_puzzles')
         try: os.mkdir(dir)
         except OSError: pass
 
@@ -1969,7 +1969,7 @@ class PuzzleWindow:
                 else:
                     button = gtk.Button()
                     button.set_image(self.load_icon(
-                             HOME_PATH + '/' + item + '.xpm'))
+                             HOME_PATH + os.sep + item + '.xpm'))
 
                 button.connect('clicked',self.letterbox_event,item)
                 table.attach(button, x, x+1, y, y+1)
@@ -2206,7 +2206,7 @@ class PuzzleWindow:
 
     def read_config(self):
         c = ConfigParser.ConfigParser()
-        c.read(os.path.expanduser('~/.crossword.cfg'))
+        c.read(os.path.expanduser('~' + os.sep + '.crossword.cfg'))
         if c.has_section('options'):
             if c.has_option('options', 'skip_filled'):
                 self.skip_filled = c.getboolean('options', 'skip_filled')
@@ -2242,7 +2242,7 @@ class PuzzleWindow:
         c.set('options', 'last_file', repr(self.last_file))
         c.set('options', 'min_box_size', self.min_box_size)
         c.set('options', 'recent_list', repr(self.recent.recent_list))
-        c.write(file(os.path.expanduser('~/.crossword.cfg'), 'w'))
+        c.write(file(os.path.expanduser('~' + os.sep + '.crossword.cfg'), 'w'))
 
 
 def osso_callback(interface, method, arguments, user_data):
