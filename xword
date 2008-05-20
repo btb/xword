@@ -1965,10 +1965,11 @@ class PuzzleWindow:
             y = 0
             for item in col:
                 if len(item) == 1:
-                    button = gtk.ToolButton(None,item)
+                    button = gtk.Button(item)
                 else:
-                    button = gtk.ToolButton(self.load_icon(
-                             HOME_PATH + '/' + item + '.xpm'),None)
+                    button = gtk.Button()
+                    button.set_image(self.load_icon(
+                             HOME_PATH + '/' + item + '.xpm'))
 
                 button.connect('clicked',self.letterbox_event,item)
                 table.attach(button, x, x+1, y, y+1)
