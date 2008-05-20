@@ -1971,6 +1971,7 @@ class PuzzleWindow:
                     button.set_image(self.load_icon(
                              HOME_PATH + os.sep + item + '.xpm'))
 
+                button.set_relief(gtk.RELIEF_NONE)
                 button.connect('clicked',self.letterbox_event,item)
                 table.attach(button, x, x+1, y, y+1)
                 y += 1
