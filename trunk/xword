@@ -1251,10 +1251,10 @@ class RecentList:
         if len(self.recent_list) > self.max_entries:
             del self.recent_list[-1]
 
-    def delete(self,newentry):
-        if newentry in self.recent_list:
+    def delete(self,oldentry):
+        if oldentry in self.recent_list:
             try:
-                self.recent_list.remove(newentry)
+                self.recent_list.remove(oldentry)
             except ValueError:
                 pass
 
@@ -1765,7 +1765,7 @@ class PuzzleWindow:
         file_menu.set_submenu(menu)
 
         append(menu, 'open', create_menu_item('Open', MENU_OPEN, 'O'))
-        item = create_menu_item('Recent', 0)
+        item = create_menu_item('Open Recent', 0)
         item.set_submenu(self.recent_menu)
         append(menu, 'recent', item)
         append(menu, 'save', create_menu_item('Save', MENU_SAVE, 'S'))
