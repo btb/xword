@@ -799,7 +799,10 @@ class PuzzleWidget:
 
         self.sw = gtk.ScrolledWindow()
         self.sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.sw.add_with_viewport(self.area)
+        viewport = gtk.Viewport()
+        viewport.add(self.area)
+        viewport.set_shadow_type(gtk.SHADOW_NONE)
+        self.sw.add(viewport)
 
         self.widget = self.sw
         self.set_puzzle(puzzle, control)
@@ -1952,7 +1955,10 @@ class PuzzleWindow:
         scrolled = gtk.ScrolledWindow()
         scrolled.set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
         table = gtk.Table(12, 3, True)
-        scrolled.add_with_viewport(table)
+        viewport = gtk.Viewport()
+        viewport.add(table)
+        viewport.set_shadow_type(gtk.SHADOW_NONE)
+        scrolled.add(viewport)
 
         itemlist = [
             ['A','D','G','J','M','P','S','V','Y','ISO_Left_Tab','Left','F12'],
