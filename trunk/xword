@@ -1426,7 +1426,9 @@ class PuzzleWindow:
         return dir + os.sep + puzzle.hashcode()
 
     def clear_puzzle(self):
-        if self.last_file: self.do_open_file(self.last_file, True)
+        if self.last_file: 
+            if self.ask("Clear the current puzzle?",["OK","Cancel"]) == 0:
+                self.do_open_file(self.last_file, True)
 
     def load_puzzle(self, fname, f):
         pp = PersistentPuzzle()
