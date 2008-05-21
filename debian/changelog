@@ -1,6 +1,5 @@
 xword (1.0.7) stable; urgency=low
 
-  * Use HildonBanner for notifications
   * Add simple recent list
   * Reformat onscreen keyboard
 
