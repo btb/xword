@@ -2,6 +2,7 @@ xword (1.0.7) stable; urgency=low
 
   * Use HildonBanner for notifications
   * Add simple recent list
+  * Reformat onscreen keyboard
 
  -- Bradley Bell <bradleyb@u.washington.edu>  Fri, 09 May 2008 17:13:05 -0700
 
