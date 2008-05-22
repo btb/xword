@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-__version__ = "1.0.7"
+__version__ = "1.0.8"
 
 __license__ = """
 Copyright (c) 2005-2006,
@@ -69,11 +69,6 @@ import ConfigParser
 
 HOME_PATH = os.sep+'usr'+os.sep+'share'+os.sep+'xword'
 if os.path.exists('data'+os.sep+'Left.xpm'): HOME_PATH = 'data'
-CHECK_ICON = HOME_PATH + os.sep + 'crossword-check.png'
-CHECK_ALL_ICON = HOME_PATH + os.sep + 'crossword-check-all.png'
-SOLVE_ICON = HOME_PATH + os.sep + 'crossword-solve.png'
-TIMER_ICON = HOME_PATH + os.sep + 'crossword-clock.png'
-ABOUT_ICON = HOME_PATH + os.sep + 'xword-logo2.png'
 
 MIN_BOX_SIZE = 12 
 MAX_BOX_SIZE = 40
@@ -85,13 +80,6 @@ NO_ERROR = 0
 MISTAKE = 1
 FIXED_MISTAKE = 2
 CHEAT = 3
-
-MENU_OPEN = 1
-MENU_SAVE = 2
-MENU_PRINT = 3
-MENU_QUIT = 5
-
-MENU_SKIP = 10
 
 layouts = [
     ('Only Puzzle', 'puzzle'),
@@ -778,7 +766,7 @@ class PuzzlePrinter:
             job.close()
             job.print_()
 
-    def print_puzzle(self, win):
+    def print_file(self, win):
         job = gnomeprint.Job(gnomeprint.config_default())
         dialog = gnomeprint.ui.Dialog(job, "Print...", 0)
         dialog.connect('response', self.do_print, job)
@@ -1135,6 +1123,15 @@ class PuzzleController:
 
         self.move_to(x, y)
 
+    def check_letter(self):
+        correct = True
+        if not self.puzzle.is_cell_correct(self.x,self.y):
+            if self.puzzle.responses[self.x,self.y] <> '':
+                self.puzzle.errors[self.x,self.y] = MISTAKE
+                correct = False
+                self.do_update('box-update', self.x, self.y)
+        self.do_update('check-letter-result', correct)
+
     def check_word(self):
         correct = True
         for (x, y) in self.selection:
@@ -1143,7 +1140,6 @@ class PuzzleController:
                     self.puzzle.errors[x, y] = MISTAKE
                     correct = False
                     self.do_update('box-update', x, y)
-
         self.do_update('check-word-result', correct)
 
     def check_puzzle(self):
@@ -1154,8 +1150,15 @@ class PuzzleController:
                     self.puzzle.errors[x, y] = MISTAKE
                     correct = False
                     self.do_update('box-update', x, y)
-
         self.do_update('check-puzzle-result', correct)
+
+    def solve_letter(self):
+        if not self.puzzle.is_cell_correct(self.x, self.y):
+            self.puzzle.errors[self.x, self.y] = CHEAT
+            self.puzzle.responses[self.x, self.y] = self.puzzle.answers[self.x, self.y]
+            self.do_update('box-update', self.x, self.y)
+        if self.puzzle.is_puzzle_correct():
+            self.do_update('puzzle-finished')
 
     def solve_word(self):
         for (x, y) in self.selection:
@@ -1163,9 +1166,28 @@ class PuzzleController:
                 self.puzzle.errors[x, y] = CHEAT
                 self.puzzle.responses[x, y] = self.puzzle.answers[x, y]
                 self.do_update('box-update', x, y)
-                    
         if self.puzzle.is_puzzle_correct():
             self.do_update('puzzle-finished')
+
+    def solve_puzzle(self):
+        for (x, y) in self.puzzle.responses.keys():
+            if not self.puzzle.is_cell_correct(x, y):
+                self.puzzle.errors[x, y] = CHEAT
+                self.puzzle.responses[x, y] = self.puzzle.answers[x, y]
+                self.do_update('box-update', x, y)
+        if self.puzzle.is_puzzle_correct():
+            self.do_update('puzzle-finished')
+
+    def clear_letter(self):
+        self.puzzle.errors[self.x, self.y] = NO_ERROR
+        self.puzzle.responses[self.x, self.y] = ''
+        self.do_update('box-update', self.x, self.y)
+
+    def clear_word(self):
+        for (x, y) in self.selection:
+            self.puzzle.errors[x, y] = NO_ERROR
+            self.puzzle.responses[x, y] = ''
+            self.do_update('box-update', x, y)
 
     def is_selected(self, x, y):
         return ((x, y) in self.selection)
@@ -1221,13 +1243,28 @@ class DummyController:
     def input_char(self, skip_filled, c):
         pass
 
+    def check_letter(self):
+        pass
+
     def check_word(self):
         pass
 
     def check_puzzle(self):
         pass
 
+    def solve_letter(self):
+        pass
+
     def solve_word(self):
+        pass
+
+    def solve_puzzle(self):
+        pass
+
+    def clear_letter(self):
+        pass
+
+    def clear_word(self):
         pass
 
     def is_selected(self, x, y):
@@ -1365,18 +1402,20 @@ class PuzzleWindow:
         def enable(w): w.set_property('sensitive', enabled)
 
         enable(self.menu_items['save'])
+        enable(self.menu_items['check'])
+        enable(self.menu_items['solve'])
+        enable(self.menu_items['clear'])
         enable(self.menu_items['properties'])
-        enable(self.menu_items['check_word'])
-        enable(self.menu_items['check_puzzle'])
-        enable(self.menu_items['solve_word'])
-        enable(self.menu_items['clear_puzzle'])
         enable(self.menu_items['notepad'])
-        
         if has_print:
             enable(self.menu_items['print'])
-        enable(self.toolbar_items['Check Word'])
-        enable(self.toolbar_items['Check Puzzle'])
-        enable(self.toolbar_items['Solve Word'])
+
+        enable(self.toolbar_items['Check\nLetter'])
+        enable(self.toolbar_items['Check\nWord'])
+        enable(self.toolbar_items['Check\nPuzzle'])
+        enable(self.toolbar_items['Solve\nLetter'])
+        enable(self.toolbar_items['Solve\nWord'])
+        #enable(self.toolbar_items['Solve\nPuzzle'])
         enable(self.clock_button)
 
     def setup_controller(self):
@@ -1385,6 +1424,7 @@ class PuzzleWindow:
         self.control.connect('title-update', self.clue_widget.update)
         self.control.connect('across-update', self.across_update)
         self.control.connect('down-update', self.down_update)
+        self.control.connect('check-letter-result', self.check_result)
         self.control.connect('check-word-result', self.check_result)
         self.control.connect('check-puzzle-result', self.check_result)
 
@@ -1588,9 +1628,9 @@ class PuzzleWindow:
 #        gtk.about_dialog_set_url_hook(self.show_website, "http://xword.garage.maemo.org")
         self.about_dialog.set_website("http://xword.garage.maemo.org/")
         self.about_dialog.set_website_label("xword.garage.maemo.org")
-        icon_path = ABOUT_ICON
         try:
-            icon_pixbuf = gtk.gdk.pixbuf_new_from_file(icon_path)
+            icon_pixbuf = gtk.gdk.pixbuf_new_from_file(HOME_PATH+os.sep+
+                'xword-logo2.png')
             self.about_dialog.set_logo(icon_pixbuf)
         except:
             pass
@@ -1739,7 +1779,7 @@ class PuzzleWindow:
             self.menu_items['recent'].set_property('sensitive', True)
             for item in self.recent.recent_list:
                 m = gtk.MenuItem(item.split(os.sep)[-1])
-                m.connect('activate', self.menu_selected, 'recent', item)
+                m.connect('activate', self.menu_selected, 'open_recent', item)
                 self.recent_menu.append(m)
         self.recent_menu.show_all()
 
@@ -1777,16 +1817,15 @@ class PuzzleWindow:
         menu = gtk.Menu()
         file_menu.set_submenu(menu)
 
-        append(menu, 'open', create_menu_item('Open...', MENU_OPEN, 'O'))
-        item = create_menu_item('Open Recent', 0)
+        append(menu,'open',create_menu_item('Open...','open_file','O'))
+        item = create_menu_item('Open Recent',0)
         item.set_submenu(self.recent_menu)
-        append(menu, 'recent', item)
-        append(menu, 'save', create_menu_item('Save As...', MENU_SAVE, 'S'))
+        append(menu,'recent',item)
+        append(menu,'save',create_menu_item('Save As...','save_file','S'))
         if has_print:
-            append(menu, 'print', create_menu_item('Print...', MENU_PRINT, 'P'))
-        append(menu, 'properties', create_menu_item('Properties...', 'properties'))
-        append(menu, '', gtk.SeparatorMenuItem())
-        append(menu, 'quit', create_menu_item('Quit', MENU_QUIT, 'Q'))
+            append(menu,'print',create_menu_item('Print...','print_file','P'))
+        append(menu,'',gtk.SeparatorMenuItem())
+        append(menu,'quit',create_menu_item('Quit','menu_quit','Q'))
 
         puzzle_menu = gtk.MenuItem('Puzzle')
         menubar.append(puzzle_menu)
@@ -1794,11 +1833,32 @@ class PuzzleWindow:
         menu=gtk.Menu()
         puzzle_menu.set_submenu(menu)
 
-        append(menu, 'check_word', create_menu_item('Check Word', 'Check Word'))
-        append(menu, 'check_puzzle', create_menu_item('Check Puzzle', 'Check Puzzle'))
-        append(menu, 'solve_word', create_menu_item('Solve Word', 'Solve Word'))
-        append(menu, 'clear_puzzle', create_menu_item('Clear Puzzle', 'Clear Puzzle'))
-        append(menu, 'notepad', create_menu_item('Notepad...', 'notepad'))
+        item = create_menu_item('Check',0)
+        append(menu,'check',item)
+        menu1 = gtk.Menu()
+        item.set_submenu(menu1)
+        append(menu1,'check_letter',create_menu_item('Letter','check_letter'))
+        append(menu1,'check_word',create_menu_item('Word','check_word'))
+        append(menu1,'check_puzzle',create_menu_item('Puzzle','check_puzzle'))
+
+        item = create_menu_item('Solve',0)
+        append(menu,'solve',item)
+        menu1 = gtk.Menu()
+        item.set_submenu(menu1)
+        append(menu1,'solve_letter',create_menu_item('Letter','solve_letter'))
+        append(menu1,'solve_word',create_menu_item('Word','solve_word'))
+        append(menu1,'solve_puzzle',create_menu_item('Puzzle','solve_puzzle'))
+
+        item = create_menu_item('Clear',0)
+        append(menu,'clear',item)
+        menu1 = gtk.Menu()
+        item.set_submenu(menu1)
+        append(menu1,'clear_letter',create_menu_item('Letter','clear_letter'))
+        append(menu1,'clear_word',create_menu_item('Word','clear_word'))
+        append(menu1,'clear_puzzle',create_menu_item('Puzzle','clear_puzzle'))
+
+        append(menu,'properties',create_menu_item('Properties...','properties'))
+        append(menu,'notepad',create_menu_item('Notepad...','notepad'))
 
         prefs_menu = gtk.MenuItem('Preferences')
         menubar.append(prefs_menu)
@@ -1806,15 +1866,15 @@ class PuzzleWindow:
         menu = gtk.Menu()
         prefs_menu.set_submenu(menu)
             
-        append(menu, 'skip-filled',
-               create_menu_item('Skip Filled', MENU_SKIP, None,
-                                gtk.CheckMenuItem, self.skip_filled))
+        append(menu,'skip-filled',
+               create_menu_item('Skip Filled','skip_filled',None,
+                                gtk.CheckMenuItem,self.skip_filled))
 
-        append(menu, 'min_box_size', 
-            create_menu_item('Minimum Box Size...', 'min_box_size'))
+        append(menu,'min_box_size',
+            create_menu_item('Minimum Box Size...','min_box_size'))
 
-        item = create_menu_item('Toolbar Layout', 0)
-        append(menu, 'toolbar', item)
+        item = create_menu_item('Toolbar Layout',0)
+        append(menu,'toolbar',item)
 
         menu1 = gtk.Menu()
         item.set_submenu(menu1)
@@ -1828,8 +1888,8 @@ class PuzzleWindow:
             g = item
             i -= 1
 
-        item = create_menu_item('Word List Layout', 0)
-        append(menu, 'layout', item)
+        item = create_menu_item('Word List Layout',0)
+        append(menu,'layout',item)
         
         menu = gtk.Menu()
         item.set_submenu(menu)
@@ -1849,31 +1909,42 @@ class PuzzleWindow:
         menu = gtk.Menu()
         help_menu.set_submenu(menu)
 
-        append(menu, 'about', create_menu_item('About', 'about'))
+        append(menu,'about',create_menu_item('About','about'))
 
         self.win.add_accel_group(accel)
         return menubar
 
     def menu_selected(self, item, action, extra=None):
-        if action == MENU_QUIT:
+        if action == 'menu_quit':
             self.exit()
-        elif action == MENU_SKIP:
+        elif action == 'skip_filled':
             self.skip_filled = not self.skip_filled
-        elif action == MENU_OPEN:
+        elif action == 'open_file':
             self.open_file()
-        elif action == 'recent':
+        elif action == 'open_recent':
             self.open_recent(extra)
-        elif action == MENU_SAVE:
+        elif action == 'save_file':
             self.save_file()
-        elif action == MENU_PRINT:
-            self.print_puzzle()
-        elif action == 'Check Word':
+        elif action == 'print_file':
+            self.print_file()
+        elif action == 'check_letter':
+            self.control.check_letter()
+        elif action == 'check_word':
             self.control.check_word()
-        elif action == 'Check Puzzle':
+        elif action == 'check_puzzle':
             self.control.check_puzzle()
-        elif action == 'Solve Word':
+        elif action == 'solve_letter':
+            self.control.solve_letter()
+        elif action == 'solve_word':
             self.control.solve_word()
-        elif action == 'Clear Puzzle':
+        elif action == 'solve_puzzle':
+            if self.ask("Show puzzle solution?",["OK","Cancel"]) == 0:
+                self.control.solve_puzzle()
+        elif action == 'clear_letter':
+            self.control.clear_letter()
+        elif action == 'clear_word':
+            self.control.clear_word()
+        elif action == 'clear_puzzle':
             self.clear_puzzle()
         elif action == 'notepad':
             self.show_notepad()
@@ -1940,17 +2011,23 @@ class PuzzleWindow:
         toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
         self.toolbar = toolbar
 
-        self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
-        self.create_toolbar_item('Open', gtk.STOCK_OPEN, 'Open')
-        self.create_toolbar_item('Check Word', CHECK_ICON,
-                                 'Check a word')
-        self.create_toolbar_item('Check Puzzle', CHECK_ALL_ICON,
-                                 'Check all words in the puzzle')
-        self.create_toolbar_item('Solve Word', SOLVE_ICON,
-                                 'Cheat to get a word')
+        #self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
+        #self.create_toolbar_item('Open', gtk.STOCK_OPEN, 'Open')
+        self.create_toolbar_item('Check\nLetter', 
+            HOME_PATH+os.sep+'check_letter.png', 'Check a letter')
+        self.create_toolbar_item('Check\nWord', 
+            HOME_PATH+os.sep+'check_word.png', 'Check a word')
+        self.create_toolbar_item('Check\nPuzzle', 
+            HOME_PATH+os.sep+'check_puzzle.png','Check all words in the puzzle')
+        self.create_toolbar_item('Solve\nLetter', 
+            HOME_PATH+os.sep+'solve_letter.png', 'Cheat to get one letter')
+        self.create_toolbar_item('Solve\nWord', 
+            HOME_PATH+os.sep+'solve_word.png', 'Cheat to get a word')
+        #self.create_toolbar_item('Solve\nPuzzle', 
+        #    HOME_PATH+os.sep+'solve_puzzle.png', 'Show puzzle solution')
         self.create_separator_toolitem()
-        b = self.create_toolbar_item('', TIMER_ICON,
-                                     'Enable or disable the clock', True)
+        b = self.create_toolbar_item('', HOME_PATH+os.sep+'clock.png', 
+            'Enable or disable the clock', True)
         self.clock_button = b
         self.idle_event()
 
@@ -2064,12 +2141,18 @@ class PuzzleWindow:
             self.exit()
         elif event == 'Open':
             self.open_file()
-        elif event == 'Check Word':
+        elif event == 'Check\nLetter':
+            self.control.check_letter()
+        elif event == 'Check\nWord':
             self.control.check_word()
-        elif event == 'Check Puzzle':
+        elif event == 'Check\nPuzzle':
             self.control.check_puzzle()
-        elif event == 'Solve Word':
+        elif event == 'Solve\nLetter':
+            self.control.solve_letter()
+        elif event == 'Solve\nWord':
             self.control.solve_word()
+        #elif event == 'Solve\nPuzzle':
+        #    self.control.solve_puzzle()
         else: # it must be the clock
             self.clock_running = not self.clock_running
             if self.clock_running:
@@ -2213,10 +2296,10 @@ class PuzzleWindow:
                 self.recent.delete(filename)
                 self.update_recent_menu()
 
-    def print_puzzle(self):
+    def print_file(self):
         if has_print:
             pr = PuzzlePrinter(self.puzzle)
-            pr.print_puzzle(self.win)
+            pr.print_file(self.win)
         else:
             self.notify('Printing libraries are not installed. Please'
                         + ' install the Python wrapper for gnomeprint.')
