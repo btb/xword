@@ -1,5 +1,5 @@
 Source: xword
-Section: games
+Section: user/games
 Priority: optional
 Maintainer: Bradley Bell <bradleyb@u.washington.edu>
 Build-Depends: debhelper (>= 4)
