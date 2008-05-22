@@ -39,8 +39,8 @@
     </li>
     <li>The program has been tested with OS2006, OS2007, and OS2008, so it
     should run on any Nokia Internet Tablet, including the 770. The
-    .deb requires python2.5, python2.5-gtk2, python2.5-hildon, and
-    python2.5-osso.
+    program depends upon the following libraries: python2.5, python2.5-gtk2, 
+    python2.5-hildon, and python2.5-osso.
     </li>
     </ul>
     </p>
@@ -49,8 +49,7 @@
 
     <a name="installing"><h1>installing xword</h1></a>
     <p>
-    To install xword on your NIT, you need to install the python
-    packages mentioned above.  These are available in the <a
+    The xword program and the python libraries are available from the <a
     href="http://repository.maemo.org/extras/">maemo extras</a>
     repository.  Go into the Application Manager, select the menu
     "Tools-&gt;Application catalog..." and verify that "maemo Extras"
@@ -59,26 +58,25 @@
     "OK", and then "Close".  Let the Application Manager reread the
     catalog list.
     </p>
-
     <p>
-    Now, <a href="https://garage.maemo.org/frs/?group_id=620">install
-    the latest version of the xword.deb file</a>.  If the program does
+    Now, click on "Browse installable applications" and then on "All".
+    Scroll to the bottom and install "xword".  If the program does
     not install correctly, you may need to <a
     href="http://maemo.org/community/wiki/ApplicationManagerRedPillMode/">enable
-    Red Pill mode</a>.  Alternatively, you can open an xterm and
-    install everything manually as root.  To do this, SAVE the latest
-    xword.deb to your NIT and then run the following commands in a terminal.
+    Red Pill mode</a>.  
+    </p>
+    <p>
+    Alternatively, you can open an xterm and
+    install everything manually as root.  To do this, make sure the
+    maemo extras repository is enabled, then run the following commands 
+    in a terminal.
     </p>
     <blockquote>
       <code>
         sudo gainroot<br/>
-        apt-get install python2.5 python2.5-gtk2 python2.5-hildon python2.5-osso<br/>
-        dpkg -i xword-x.x.x_all.deb
+        apt-get install xword
       </code>
     </blockquote>
-    <p>Be sure to change the "xword-x.x.x_all.deb" file to the correct file
-    name.
-    </p>
     <p>
     See also the <a href="https://garage.maemo.org/projects/xword/">xword
     for maemo project page</a>.
@@ -97,7 +95,7 @@
       The <a
       href="http://www.nytimes.com/pages/crosswords/index.html">New York
       Times</a> provides a <a
-      href="http://www.nytimes.com/specials/puzzles/classic.puz">free daily
+      href="http://www.nytimes.com/specials/puzzles/classic.puz">free 
       classic puzzle</a>.  The <a
     href="http://www.chron.com/entertainment/games/">Houston Chronicle</a>
     also has a <a
