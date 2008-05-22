@@ -1,3 +1,12 @@
+xword (1.0.8) stable; urgency=low
+
+  * Reformat 'Puzzle' menu. Now contains 'Check', 'Solve', and 'Clear' for
+    each of 'Letter', 'Word', and 'Puzzle'.
+  * Alter toolbar buttons and include new buttons for 'Check Letter' and
+    'Solve Letter'.
+
+ -- Terrence Fleury <terrencegf@gmail.com>  Thu, 22 May 2008 18:13:00 -0500
+
 xword (1.0.7-1) stable; urgency=low
 
   * Add simple recent list
