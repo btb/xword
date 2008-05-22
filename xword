@@ -1586,7 +1586,8 @@ class PuzzleWindow:
              'Maemo Port: Bradley Bell <bradleyb@u.washington.edu>\n' +
              'and Terrence Fleury <terrencegf@gmail.com>'])
 #        gtk.about_dialog_set_url_hook(self.show_website, "http://xword.garage.maemo.org")
-        self.about_dialog.set_website_label("http://xword.garage.maemo.org")
+        self.about_dialog.set_website("http://xword.garage.maemo.org/")
+        self.about_dialog.set_website_label("xword.garage.maemo.org")
         icon_path = ABOUT_ICON
         try:
             icon_pixbuf = gtk.gdk.pixbuf_new_from_file(icon_path)
@@ -1776,11 +1777,11 @@ class PuzzleWindow:
         menu = gtk.Menu()
         file_menu.set_submenu(menu)
 
-        append(menu, 'open', create_menu_item('Open', MENU_OPEN, 'O'))
+        append(menu, 'open', create_menu_item('Open...', MENU_OPEN, 'O'))
         item = create_menu_item('Open Recent', 0)
         item.set_submenu(self.recent_menu)
         append(menu, 'recent', item)
-        append(menu, 'save', create_menu_item('Save', MENU_SAVE, 'S'))
+        append(menu, 'save', create_menu_item('Save As...', MENU_SAVE, 'S'))
         if has_print:
             append(menu, 'print', create_menu_item('Print...', MENU_PRINT, 'P'))
         append(menu, 'properties', create_menu_item('Properties...', 'properties'))
@@ -1810,7 +1811,7 @@ class PuzzleWindow:
                                 gtk.CheckMenuItem, self.skip_filled))
 
         append(menu, 'min_box_size', 
-            create_menu_item('Set Min Box Size', 'min_box_size'))
+            create_menu_item('Minimum Box Size...', 'min_box_size'))
 
         item = create_menu_item('Toolbar Layout', 0)
         append(menu, 'toolbar', item)
