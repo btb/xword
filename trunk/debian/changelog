@@ -1,9 +1,10 @@
-xword (1.0.7) stable; urgency=low
+xword (1.0.7-1) stable; urgency=low
 
   * Add simple recent list
   * Reformat onscreen keyboard
+  * Minor code updates and text changes
 
- -- Bradley Bell <bradleyb@u.washington.edu>  Fri, 09 May 2008 17:13:05 -0700
+ -- Bradley Bell <bradleyb@u.washington.edu>  Wed, 21 May 2008 15:35:00 -0700
 
 xword (1.0.6) stable; urgency=low
 
