@@ -81,6 +81,13 @@ MISTAKE = 1
 FIXED_MISTAKE = 2
 CHEAT = 3
 
+CHK_LTR_BTN = 'Chk Ltr'
+CHK_WRD_BTN = 'Chk Wrd'
+CHK_PUZ_BTN = 'Chk Puz'
+SOL_LTR_BTN = 'Sol Ltr'
+SOL_WRD_BTN = 'Sol Wrd'
+SOL_PUZ_BTN = 'Sol Puz'
+
 layouts = [
     ('Only Puzzle', 'puzzle'),
     ('Right Side', ('H', 'puzzle', 550, ('V', 'across', 250, 'down'))),
@@ -1410,12 +1417,12 @@ class PuzzleWindow:
         if has_print:
             enable(self.menu_items['print'])
 
-        enable(self.toolbar_items['Check\nLetter'])
-        enable(self.toolbar_items['Check\nWord'])
-        enable(self.toolbar_items['Check\nPuzzle'])
-        enable(self.toolbar_items['Solve\nLetter'])
-        enable(self.toolbar_items['Solve\nWord'])
-        #enable(self.toolbar_items['Solve\nPuzzle'])
+        enable(self.toolbar_items[CHK_LTR_BTN])
+        enable(self.toolbar_items[CHK_WRD_BTN])
+        enable(self.toolbar_items[CHK_PUZ_BTN])
+        enable(self.toolbar_items[SOL_LTR_BTN])
+        enable(self.toolbar_items[SOL_WRD_BTN])
+        #enable(self.toolbar_items[SOL_PUZ_BTN])
         enable(self.clock_button)
 
     def setup_controller(self):
@@ -2013,17 +2020,17 @@ class PuzzleWindow:
 
         #self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
         #self.create_toolbar_item('Open', gtk.STOCK_OPEN, 'Open')
-        self.create_toolbar_item('Check\nLetter', 
+        self.create_toolbar_item(CHK_LTR_BTN, 
             HOME_PATH+os.sep+'check_letter.png', 'Check a letter')
-        self.create_toolbar_item('Check\nWord', 
+        self.create_toolbar_item(CHK_WRD_BTN, 
             HOME_PATH+os.sep+'check_word.png', 'Check a word')
-        self.create_toolbar_item('Check\nPuzzle', 
+        self.create_toolbar_item(CHK_PUZ_BTN, 
             HOME_PATH+os.sep+'check_puzzle.png','Check all words in the puzzle')
-        self.create_toolbar_item('Solve\nLetter', 
+        self.create_toolbar_item(SOL_LTR_BTN, 
             HOME_PATH+os.sep+'solve_letter.png', 'Cheat to get one letter')
-        self.create_toolbar_item('Solve\nWord', 
+        self.create_toolbar_item(SOL_WRD_BTN, 
             HOME_PATH+os.sep+'solve_word.png', 'Cheat to get a word')
-        #self.create_toolbar_item('Solve\nPuzzle', 
+        #self.create_toolbar_item(SOL_PUZ_BTN, 
         #    HOME_PATH+os.sep+'solve_puzzle.png', 'Show puzzle solution')
         self.create_separator_toolitem()
         b = self.create_toolbar_item('', HOME_PATH+os.sep+'clock.png', 
@@ -2141,17 +2148,17 @@ class PuzzleWindow:
             self.exit()
         elif event == 'Open':
             self.open_file()
-        elif event == 'Check\nLetter':
+        elif event == CHK_LTR_BTN:
             self.control.check_letter()
-        elif event == 'Check\nWord':
+        elif event == CHK_WRD_BTN:
             self.control.check_word()
-        elif event == 'Check\nPuzzle':
+        elif event == CHK_PUZ_BTN:
             self.control.check_puzzle()
-        elif event == 'Solve\nLetter':
+        elif event == SOL_LTR_BTN:
             self.control.solve_letter()
-        elif event == 'Solve\nWord':
+        elif event == SOL_WRD_BTN:
             self.control.solve_word()
-        #elif event == 'Solve\nPuzzle':
+        #elif event == SOL_PUZ_BTN:
         #    self.control.solve_puzzle()
         else: # it must be the clock
             self.clock_running = not self.clock_running
