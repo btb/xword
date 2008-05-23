@@ -2113,6 +2113,12 @@ class PuzzleWindow:
                 button = gtk.ToolButton(self.load_icon(
                          HOME_PATH + os.sep + label + '.xpm'), None)
 
+            if has_hildon:
+                if label == 'Escape':
+                    button.tap_and_hold_setup(self.check_popup)
+                if label == 'F12':
+                    button.tap_and_hold_setup(self.check_popup)
+
             #button.set_relief(gtk.RELIEF_NONE)
             #button.set_focus_on_click(False)
             button.connect('clicked',self.letterbar_event,label)
@@ -2214,12 +2220,6 @@ class PuzzleWindow:
                 self.clock_time += (time.time() - self.clock_start)
 
     def letterbar_event(self, widget, event):
-        if event == 'Escape':
-            self.check_popup.popup(None, None, None, 0, 0)
-            return
-        elif event == 'F12':
-            self.solve_popup.popup(None, None, None, 0, 0)
-            return
         keypress = gtk.gdk.Event(gtk.gdk.KEY_PRESS)
         keypress.keyval = int(gtk.gdk.keyval_from_name(event))
         if len(event) is 1 and event.isalpha():
