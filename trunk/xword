@@ -2059,7 +2059,7 @@ class PuzzleWindow:
                     col = 0
                     row += 1
                 continue
-            if len(label) == 1:
+            elif len(label) == 1:
                 button = gtk.ToolButton(None, label)
             else:
                 button = gtk.ToolButton(self.load_icon(
