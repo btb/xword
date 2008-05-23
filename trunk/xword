@@ -1983,38 +1983,23 @@ class PuzzleWindow:
         else:
             img = None
 
-        if gtk.pygtk_version >= (2,3,90):
-            if is_toggle:
-                item = gtk.ToggleToolButton()
-                item.set_label(label)
-                item.set_icon_widget(img)
-            else:
-                item = gtk.ToolButton(img, label)
-
-            item.connect('clicked', self.toolbar_event, label)
-            self.toolbar.insert(item, -1)
-            self.toolbar_items[label] = item
-            return item
+        if is_toggle:
+            item = gtk.ToggleToolButton()
+            item.set_label(label)
+            item.set_icon_widget(img)
         else:
-            if is_toggle:
-                x = self.toolbar.append_element(gtk.TOOLBAR_CHILD_TOGGLEBUTTON,
-                                                None, label, tooltip, tooltip,
-                                                img, self.toolbar_event, label)
-            else:
-                x = self.toolbar.append_item(label, tooltip, tooltip, img,
-                                             self.toolbar_event, label)
-            self.toolbar_items[label] = x
-            return x
+            item = gtk.ToolButton(img, label)
+
+        item.connect('clicked', self.toolbar_event, label)
+        self.toolbar.insert(item, -1)
+        self.toolbar_items[label] = item
+        return item
 
     def create_separator_toolitem(self):
-        if gtk.pygtk_version >= (2,3,90):
-            item = gtk.SeparatorToolItem()
-            item.set_draw(False)
-            item.set_expand(True)
-            self.toolbar.insert(item, -1)
-        else:
-            # I don't know how to do this
-            pass
+        item = gtk.SeparatorToolItem()
+        item.set_draw(False)
+        item.set_expand(True)
+        self.toolbar.insert(item, -1)
 
     def create_toolbar(self):
         self.toolbar_items = {}
@@ -2250,62 +2235,46 @@ class PuzzleWindow:
             self.do_open_file(open_dlg.get_filename())
             open_dlg.destroy()
         
-        if gtk.pygtk_version < (2,3,90):
-            dlg = gtk.FileSelection('Select a puzzle')
-            dlg.connect('destroy', lambda w: dlg.destroy())
-            dlg.ok_button.connect('clicked', open_cb, dlg)
-            dlg.cancel_button.connect('clicked', lambda w: dlg.destroy())
-            if self.default_loc: dlg.set_filename(self.default_loc + os.sep)
-            dlg.show()
-        else:
-            if has_hildon:
-                dlg = hildon.FileChooserDialog(self.win,
+        if has_hildon:
+            dlg = hildon.FileChooserDialog(self.win,
                                                gtk.FILE_CHOOSER_ACTION_OPEN)
-            else:
-                dlg = gtk.FileChooserDialog("Open...",
-                                            None,
-                                            gtk.FILE_CHOOSER_ACTION_OPEN,
-                                            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                             gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-            dlg.set_default_response(gtk.RESPONSE_OK)
-            if self.default_loc: dlg.set_current_folder(self.default_loc)
+        else:
+            dlg = gtk.FileChooserDialog("Open...",
+                                        None,
+                                        gtk.FILE_CHOOSER_ACTION_OPEN,
+                                        (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                         gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dlg.set_default_response(gtk.RESPONSE_OK)
+        if self.default_loc: dlg.set_current_folder(self.default_loc)
 
-            response = dlg.run()
-            if response == gtk.RESPONSE_OK:
-                open_cb(None, dlg)
-            else:
-                dlg.destroy()
+        response = dlg.run()
+        if response == gtk.RESPONSE_OK:
+            open_cb(None, dlg)
+        else:
+            dlg.destroy()
 
     def save_file(self):
         def save_cb(w, save_dlg):
             self.do_save_file(save_dlg.get_filename())
             save_dlg.destroy()
         
-        if gtk.pygtk_version < (2,3,90):
-            dlg = gtk.FileSelection('Name the puzzle')
-            dlg.connect('destroy', lambda w: dlg.destroy())
-            dlg.ok_button.connect('clicked', save_cb, dlg)
-            dlg.cancel_button.connect('clicked', lambda w: dlg.destroy())
-            if self.default_loc: dlg.set_filename(self.default_loc + os.sep)
-            dlg.show()
-        else:
-            if has_hildon:
-                dlg = hildon.FileChooserDialog(self.win,
+        if has_hildon:
+            dlg = hildon.FileChooserDialog(self.win,
                                                gtk.FILE_CHOOSER_ACTION_SAVE)
-            else:
-                dlg = gtk.FileChooserDialog("Save As...",
-                                            None,
-                                            gtk.FILE_CHOOSER_ACTION_SAVE,
-                                            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                             gtk.STOCK_SAVE, gtk.RESPONSE_OK))
-            dlg.set_default_response(gtk.RESPONSE_OK)
-            if self.default_loc: dlg.set_current_folder(self.default_loc)
+        else:
+            dlg = gtk.FileChooserDialog("Save As...",
+                                        None,
+                                        gtk.FILE_CHOOSER_ACTION_SAVE,
+                                        (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                         gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+        dlg.set_default_response(gtk.RESPONSE_OK)
+        if self.default_loc: dlg.set_current_folder(self.default_loc)
 
-            response = dlg.run()
-            if response == gtk.RESPONSE_OK:
-                save_cb(None, dlg)
-            else:
-                dlg.destroy()
+        response = dlg.run()
+        if response == gtk.RESPONSE_OK:
+            save_cb(None, dlg)
+        else:
+            dlg.destroy()
 
     def open_recent(self, filename):
         if filename != None:
