@@ -1352,6 +1352,9 @@ class PuzzleWindow:
         menubox.pack_start(self.menubar, False, False, 0)
         self.update_recent_menu()
 
+        self.check_popup = self.create_check_popup()
+        self.solve_popup = self.create_solve_popup()
+
         win.add(menubox)
 
         self.box = gtk.HBox()
@@ -1797,6 +1800,51 @@ class PuzzleWindow:
                 self.recent_menu.append(m)
         self.recent_menu.show_all()
 
+
+    def create_check_popup(self):
+        menu = gtk.Menu()
+
+        item = gtk.ImageMenuItem('Letter')
+        item.set_image(self.load_icon(HOME_PATH+os.sep+'check_letter.png'))
+        item.connect('activate', self.menu_selected, 'check_letter')
+        menu.append(item)
+
+        item = gtk.ImageMenuItem('Word')
+        item.set_image(self.load_icon(HOME_PATH+os.sep+'check_word.png'))
+        item.connect('activate', self.menu_selected, 'check_word')
+        menu.append(item)
+
+        item = gtk.ImageMenuItem('Puzzle')
+        item.set_image(self.load_icon(HOME_PATH+os.sep+'check_puzzle.png'))
+        item.connect('activate', self.menu_selected, 'check_puzzle')
+        menu.append(item)
+
+        menu.show_all()
+        return menu
+
+
+    def create_solve_popup(self):
+        menu = gtk.Menu()
+
+        item = gtk.ImageMenuItem('Letter')
+        item.set_image(self.load_icon(HOME_PATH+os.sep+'solve_letter.png'))
+        item.connect('activate', self.menu_selected, 'solve_letter')
+        menu.append(item)
+
+        item = gtk.ImageMenuItem('Word')
+        item.set_image(self.load_icon(HOME_PATH+os.sep+'solve_word.png'))
+        item.connect('activate', self.menu_selected, 'solve_word')
+        menu.append(item)
+
+        item = gtk.ImageMenuItem('Puzzle')
+        item.set_image(self.load_icon(HOME_PATH+os.sep+'solve_puzzle.png'))
+        item.connect('activate', self.menu_selected, 'solve_puzzle')
+        menu.append(item)
+
+        menu.show_all()
+        return menu
+
+
     def create_menubar(self):
         accel = gtk.AccelGroup()
 
@@ -2059,6 +2107,17 @@ class PuzzleWindow:
                     col = 0
                     row += 1
                 continue
+            elif label == 'Escape':
+                button = gtk.Button()
+                button.set_image(self.load_icon(
+                         HOME_PATH + os.sep + label + '.xpm'))
+                button.connect_object('event', self.popup_event, self.check_popup)
+            elif label == 'F12':
+                button = gtk.Button()
+                button.set_image(self.load_icon(
+                         HOME_PATH + os.sep + label + '.xpm'))
+                button.connect_object('event', self.popup_event, self.solve_popup)
+                button.show()
             elif len(label) == 1:
                 button = gtk.ToolButton(None, label)
             else:
@@ -2172,6 +2231,12 @@ class PuzzleWindow:
             self.puzzle_key_event('',keypress)
         else:
             self.key_event('',keypress)
+
+    def popup_event(self, widget, event):
+        if event.type == gtk.gdk.BUTTON_PRESS:
+            widget.popup(None, None, None, event.button, event.time)
+            return True
+        return False
 
     def button_event(self, widget, event, puzzle):
         if event.type is gtk.gdk.BUTTON_PRESS:
