@@ -1316,7 +1316,6 @@ class PuzzleWindow:
 
         self.skip_filled = False
         self.layout = 0
-        self.checks_position = 0
         self.keyboard_position = 0
         self.window_size = (800, 480)
         self.maximized = False
@@ -1365,16 +1364,17 @@ class PuzzleWindow:
         self.box.pack_start(self.vbox2,True,True,0)
         self.box.pack_start(self.toolbox[1],False,False,0)
 
-        self.toolbar = self.create_toolbar()
-        self.letterbarV = self.create_letterbar(12,3,
+        self.letterbarV = self.create_letterbar(13,3,
             ['A','B','C','D','E','F','G','H','I','J','K','L','M',
              'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
              'BackSpace','ISO_Left_Tab','Up','Tab','Left','Return',
-             'Right','F12','Down','Escape'])
-        self.letterbarH = self.create_letterbar(3,12,
-            ['A','B','C','D','E','F','G','H','I','ISO_Left_Tab','Up','Tab',
-             'J','K','L','M','N','O','P','Q','R','Left','Return','Right',
-             'S','T','U','V','W','X','Y','Z','BackSpace','F12','Down','Escape'])
+             'Right','F12','Down','Escape', 'toolbar'])
+        self.clock_buttonV = self.clock_button
+        self.letterbarH = self.create_letterbar(3,13,
+            ['Q','W','E','R','T','Y','U','I','O','P','ISO_Left_Tab','Up','Tab',
+             'A','S','D','F','G','H','J','K','L','BackSpace','Left','Return','Right',
+             'Z','X','C','V','B','N','M','toolbar','F12','Down','Escape'])
+        self.clock_buttonH = self.clock_button
 
         self.create_widgets()
         self.setup_controller()
@@ -1387,7 +1387,7 @@ class PuzzleWindow:
         self.cur_layout = self.generate_layout(self.positions)
         self.vbox.pack_start(self.cur_layout, True, True, 0)
 
-        self.set_toolbox_layout(self.checks_position,self.keyboard_position)
+        self.set_toolbox_layout(self.keyboard_position)
 
         gobject.timeout_add(500, self.idle_event)
         win.connect('key-press-event', self.key_event)
@@ -1424,11 +1424,11 @@ class PuzzleWindow:
         if has_print:
             enable(self.menu_items['print'])
 
-        enable(self.toolbar_items[CHK_LTR_BTN])
-        enable(self.toolbar_items[CHK_WRD_BTN])
-        enable(self.toolbar_items[CHK_PUZ_BTN])
-        enable(self.toolbar_items[SOL_LTR_BTN])
-        enable(self.toolbar_items[SOL_WRD_BTN])
+        #enable(self.toolbar_items[CHK_LTR_BTN])
+        #enable(self.toolbar_items[CHK_WRD_BTN])
+        #enable(self.toolbar_items[CHK_PUZ_BTN])
+        #enable(self.toolbar_items[SOL_LTR_BTN])
+        #enable(self.toolbar_items[SOL_WRD_BTN])
         #enable(self.toolbar_items[SOL_PUZ_BTN])
         enable(self.clock_button)
 
@@ -1756,30 +1756,22 @@ class PuzzleWindow:
             for (name, w) in self.widgets.items():
                 if w is widget: return name
 
-    def set_toolbox_layout(self,checks_position,keyboard_position):
+    def set_toolbox_layout(self,keyboard_position):
         if not self.letterbarV: return
-
-        self.checks_position = checks_position
         self.keyboard_position = keyboard_position
 
         for i in range(0,4):
             for child in self.toolbox[i].get_children():
                 self.toolbox[i].remove(child)
 
-        if self.checks_position > 0:
-            if self.checks_position == 1 or self.checks_position == 2:
-                self.toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
-            elif self.checks_position == 3 or self.checks_position == 4:
-                self.toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-            self.toolbox[self.checks_position-1].pack_start(self.toolbar,
-                False,False,0)
-
         if self.keyboard_position == 1 or self.keyboard_position == 2:
             self.toolbox[self.keyboard_position-1].pack_start(self.letterbarV,
                 False,False,0)
+            self.clock_button = self.clock_buttonV
         elif self.keyboard_position == 3 or self.keyboard_position == 4:
             self.toolbox[self.keyboard_position-1].pack_start(self.letterbarH,
                 False,False,0)
+            self.clock_button = self.clock_buttonH
 
         self.win.show_all()
 
@@ -1895,20 +1887,6 @@ class PuzzleWindow:
         append(menu,'min_box_size',
             create_menu_item('Minimum Box Size...','min_box_size'))
 
-        item = create_menu_item('Checks Buttons', 0)
-        append(menu, 'checks', item)
-        menu1 = gtk.Menu()
-        item.set_submenu(menu1)
-        g = None
-        i = -1
-        for side in ['Off', 'Left', 'Right', 'Top', 'Bottom']:
-            item = create_radio_item(side, i-20, g,
-                -(i+1)==self.checks_position)
-            menu1.append(item)
-            if not g: item.set_active(True)
-            g = item
-            i -= 1
-
         item = create_menu_item('Onscreen Keyboard', 0)
         append(menu, 'keyboard', item)
         menu1 = gtk.Menu()
@@ -1989,14 +1967,10 @@ class PuzzleWindow:
             self.show_about()
         elif action == 'min_box_size':
             self.prompt_min_box_size()
-        elif action < -20:
-            checks_position = -(action+21)
-            if checks_position <> self.checks_position:
-                self.set_toolbox_layout(checks_position,self.keyboard_position)
         elif action < -10:
             keyboard_position = -(action+11)
             if keyboard_position <> self.keyboard_position:
-                self.set_toolbox_layout(self.checks_position,keyboard_position)
+                self.set_toolbox_layout(keyboard_position)
         elif action < 0:
             layout = -(action+1)
             if layout <> self.layout: self.set_layout(layout)
@@ -2046,27 +2020,27 @@ class PuzzleWindow:
         self.toolbar_items = {}
         
         toolbar = gtk.Toolbar()
-        toolbar.set_style(gtk.TOOLBAR_BOTH)
-        toolbar.set_orientation(gtk.ORIENTATION_VERTICAL)
+        toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
         self.toolbar = toolbar
 
         #self.create_toolbar_item('Quit', gtk.STOCK_QUIT, 'Quit')
         #self.create_toolbar_item('Open', gtk.STOCK_OPEN, 'Open')
-        self.create_toolbar_item(CHK_LTR_BTN, 
-            HOME_PATH+os.sep+'check_letter.png', 'Check a letter')
-        self.create_toolbar_item(CHK_WRD_BTN, 
-            HOME_PATH+os.sep+'check_word.png', 'Check a word')
-        self.create_toolbar_item(CHK_PUZ_BTN, 
-            HOME_PATH+os.sep+'check_puzzle.png','Check all words in the puzzle')
-        self.create_toolbar_item(SOL_LTR_BTN, 
-            HOME_PATH+os.sep+'solve_letter.png', 'Cheat to get one letter')
-        self.create_toolbar_item(SOL_WRD_BTN, 
-            HOME_PATH+os.sep+'solve_word.png', 'Cheat to get a word')
+        #self.create_toolbar_item(CHK_LTR_BTN, 
+        #    HOME_PATH+os.sep+'check_letter.png', 'Check a letter')
+        #self.create_toolbar_item(CHK_WRD_BTN, 
+        #    HOME_PATH+os.sep+'check_word.png', 'Check a word')
+        #self.create_toolbar_item(CHK_PUZ_BTN, 
+        #    HOME_PATH+os.sep+'check_puzzle.png','Check all words in the puzzle')
+        #self.create_toolbar_item(SOL_LTR_BTN, 
+        #    HOME_PATH+os.sep+'solve_letter.png', 'Cheat to get one letter')
+        #self.create_toolbar_item(SOL_WRD_BTN, 
+        #    HOME_PATH+os.sep+'solve_word.png', 'Cheat to get a word')
         #self.create_toolbar_item(SOL_PUZ_BTN, 
         #    HOME_PATH+os.sep+'solve_puzzle.png', 'Show puzzle solution')
-        self.create_separator_toolitem()
+        #self.create_separator_toolitem()
         b = self.create_toolbar_item('', HOME_PATH+os.sep+'clock.png', 
             'Enable or disable the clock', True)
+        b.set_is_important(True)
         self.clock_button = b
         self.idle_event()
 
@@ -2092,6 +2066,14 @@ class PuzzleWindow:
         row = 0
         col = 0
         for label in labels:
+            if label == 'toolbar':
+                self.toolbar = self.create_toolbar()
+                table.attach(self.toolbar, col, col+3, row, row+1)
+                col += 3
+                if (col >= cols):
+                    col = 0
+                    row += 1
+                continue
             if len(label) == 1:
                 button = gtk.ToolButton(None, label)
             else:
@@ -2350,8 +2332,6 @@ class PuzzleWindow:
                 self.skip_filled = c.getboolean('options', 'skip_filled')
             if c.has_option('options', 'layout'):
                 self.layout = c.getint('options', 'layout')
-            if c.has_option('options', 'checks_position'):
-                self.checks_position = c.getint('options', 'checks_position')
             if c.has_option('options', 'keyboard_position'):
                 self.keyboard_position = c.getint('options','keyboard_position')
             if c.has_option('options', 'positions'):
@@ -2374,7 +2354,6 @@ class PuzzleWindow:
         c.add_section('options')
         c.set('options', 'skip_filled', self.skip_filled)
         c.set('options', 'layout', self.layout)
-        c.set('options', 'checks_position', self.checks_position)
         c.set('options', 'keyboard_position', self.keyboard_position)
         c.set('options', 'positions', repr(self.get_layout(self.cur_layout)))
         c.set('options', 'window_size', repr(self.window_size))
