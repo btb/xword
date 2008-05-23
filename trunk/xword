@@ -2107,17 +2107,6 @@ class PuzzleWindow:
                     col = 0
                     row += 1
                 continue
-            elif label == 'Escape':
-                button = gtk.Button()
-                button.set_image(self.load_icon(
-                         HOME_PATH + os.sep + label + '.xpm'))
-                button.connect_object('event', self.popup_event, self.check_popup)
-            elif label == 'F12':
-                button = gtk.Button()
-                button.set_image(self.load_icon(
-                         HOME_PATH + os.sep + label + '.xpm'))
-                button.connect_object('event', self.popup_event, self.solve_popup)
-                button.show()
             elif len(label) == 1:
                 button = gtk.ToolButton(None, label)
             else:
@@ -2225,18 +2214,18 @@ class PuzzleWindow:
                 self.clock_time += (time.time() - self.clock_start)
 
     def letterbar_event(self, widget, event):
+        if event == 'Escape':
+            self.check_popup.popup(None, None, None, 0, 0)
+            return
+        elif event == 'F12':
+            self.solve_popup.popup(None, None, None, 0, 0)
+            return
         keypress = gtk.gdk.Event(gtk.gdk.KEY_PRESS)
         keypress.keyval = int(gtk.gdk.keyval_from_name(event))
         if len(event) is 1 and event.isalpha():
             self.puzzle_key_event('',keypress)
         else:
             self.key_event('',keypress)
-
-    def popup_event(self, widget, event):
-        if event.type == gtk.gdk.BUTTON_PRESS:
-            widget.popup(None, None, None, event.button, event.time)
-            return True
-        return False
 
     def button_event(self, widget, event, puzzle):
         if event.type is gtk.gdk.BUTTON_PRESS:
