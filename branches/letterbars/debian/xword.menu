@@ -1,2 +1,0 @@
-?package(xword):needs="X11" section="Games/Puzzles"\
-  title="Xword" command="/usr/games/xword"
