@@ -1804,17 +1804,17 @@ class PuzzleWindow:
     def create_check_popup(self):
         menu = gtk.Menu()
 
-        item = gtk.ImageMenuItem('Letter')
+        item = gtk.ImageMenuItem('Check Letter')
         item.set_image(self.load_icon(HOME_PATH+os.sep+'check_letter.png'))
         item.connect('activate', self.menu_selected, 'check_letter')
         menu.append(item)
 
-        item = gtk.ImageMenuItem('Word')
+        item = gtk.ImageMenuItem('Check Word')
         item.set_image(self.load_icon(HOME_PATH+os.sep+'check_word.png'))
         item.connect('activate', self.menu_selected, 'check_word')
         menu.append(item)
 
-        item = gtk.ImageMenuItem('Puzzle')
+        item = gtk.ImageMenuItem('Check Puzzle')
         item.set_image(self.load_icon(HOME_PATH+os.sep+'check_puzzle.png'))
         item.connect('activate', self.menu_selected, 'check_puzzle')
         menu.append(item)
@@ -1826,17 +1826,17 @@ class PuzzleWindow:
     def create_solve_popup(self):
         menu = gtk.Menu()
 
-        item = gtk.ImageMenuItem('Letter')
+        item = gtk.ImageMenuItem('Solve Letter')
         item.set_image(self.load_icon(HOME_PATH+os.sep+'solve_letter.png'))
         item.connect('activate', self.menu_selected, 'solve_letter')
         menu.append(item)
 
-        item = gtk.ImageMenuItem('Word')
+        item = gtk.ImageMenuItem('Solve Word')
         item.set_image(self.load_icon(HOME_PATH+os.sep+'solve_word.png'))
         item.connect('activate', self.menu_selected, 'solve_word')
         menu.append(item)
 
-        item = gtk.ImageMenuItem('Puzzle')
+        item = gtk.ImageMenuItem('Solve Puzzle')
         item.set_image(self.load_icon(HOME_PATH+os.sep+'solve_puzzle.png'))
         item.connect('activate', self.menu_selected, 'solve_puzzle')
         menu.append(item)
@@ -2117,7 +2117,7 @@ class PuzzleWindow:
                 if label == 'Escape':
                     button.tap_and_hold_setup(self.check_popup)
                 if label == 'F12':
-                    button.tap_and_hold_setup(self.check_popup)
+                    button.tap_and_hold_setup(self.solve_popup)
 
             #button.set_relief(gtk.RELIEF_NONE)
             #button.set_focus_on_click(False)
