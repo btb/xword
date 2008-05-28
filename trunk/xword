@@ -1541,15 +1541,8 @@ class PuzzleWindow:
         gtk.main_quit()
 
     def notify(self, msg):
-        # FIXME: we want to use HildonBanner instead of
-        # SystemNote, but when a new puzzle is opened via dbus,
-        # the user will never see the notification (because xword
-        # remains in the background)
-        #if has_hildon:
-        #    hildon.hildon_banner_show_information(self.win, None, msg)
-        if has_osso:
-            note = osso.SystemNote(osso_c)
-            note.system_note_infoprint(msg)
+        if has_hildon:
+            hildon.hildon_banner_show_information(self.win, None, msg)
         else:
             self.status_bar.push(self.status_bar.get_context_id('stat'), msg)
 
@@ -2433,6 +2426,7 @@ class PuzzleWindow:
 
 def osso_callback(interface, method, arguments, user_data):
     if method == 'mime_open':
+        w.win.present()
         filename = arguments[0]
         if filename.startswith('file://'):
             filename = filename[7:]
