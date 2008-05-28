@@ -2085,6 +2085,7 @@ class PuzzleWindow:
         b.set_is_important(True)
         self.clock_buttons.append(b)
         self.clock_buttons_handler_ids.append(handler_id)
+        self.idle_event()
 
         return len(self.clock_buttons) - 1
 
@@ -2106,7 +2107,6 @@ class PuzzleWindow:
         self.create_separator_toolitem()
         pos = self.create_clock_button()
         self.toolbar.insert(self.clock_buttons[pos], -1)
-        self.idle_event()
 
         return toolbar
 
@@ -2219,9 +2219,9 @@ class PuzzleWindow:
         else:
             total = int(self.clock_time)
         s = time_str(total)
-        sold = self.clock_buttons[0].get_label()
-        if sold <> s: 
-            for index in range(len(self.clock_buttons)):
+        for index in range(len(self.clock_buttons)):
+            sold = self.clock_buttons[index].get_label()
+            if sold <> s: 
                 self.clock_buttons[index].set_label(s)
 
         return True
