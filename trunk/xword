@@ -1301,6 +1301,7 @@ class RecentList:
 class PuzzleWindow:
     def __init__(self, puzzle):
         self.clock_time = 0.0
+        self.clock_start = time.time()
         self.clock_running = False
 
         self.win = None
@@ -1414,6 +1415,10 @@ class PuzzleWindow:
 
         if self.last_file and os.path.exists(self.last_file): 
             self.do_open_file(self.last_file)
+        else:
+            self.clock_running = False
+
+        self.activate_clock(self.clock_running)
 
     def enable_controls(self, enabled):
         def enable(w): w.set_property('sensitive', enabled)
@@ -1445,16 +1450,18 @@ class PuzzleWindow:
         self.control.connect('check-puzzle-result', self.check_result)
 
     def do_open_file(self, fname, start_over = False):
-        if self.clock_running:
-            for index in range(len(self.clock_buttons)):
-                self.clock_buttons[index].set_active(False)
+        if start_over: 
+            self.activate_clock(False)
         
         if self.puzzle: self.write_puzzle()
+
+        self.clock_start = time.time()
 
         try:
             self.set_puzzle(Puzzle(fname), start_over)
         except:
             self.notify("%s could not be loaded" % fname)
+            self.activate_clock(False)
             return
         self.last_file = fname
         self.recent.add(fname)
@@ -2225,6 +2232,19 @@ class PuzzleWindow:
 
         return True
 
+    def activate_clock(self, active=True):
+        self.clock_running = active
+        if self.clock_running:
+            self.clock_start = time.time()
+        else:
+            self.clock_time += (time.time() - self.clock_start)
+        for index in range(len(self.clock_buttons)):
+            self.clock_buttons[index].handler_block(
+                self.clock_buttons_handler_ids[index])
+            self.clock_buttons[index].set_active(active)
+            self.clock_buttons[index].handler_unblock(
+                self.clock_buttons_handler_ids[index])
+
     def toolbar_event(self, widget, event):
         if event == 'Quit':
             self.exit()
@@ -2239,17 +2259,8 @@ class PuzzleWindow:
         elif event == SOL_WRD_BTN:
             self.control.solve_word()
         else: # it must be the clock
-            self.clock_running = not self.clock_running
-            if self.clock_running:
-                self.clock_start = time.time()
-            else:
-                self.clock_time += (time.time() - self.clock_start)
-            for index in range(len(self.clock_buttons)):
-                self.clock_buttons[index].handler_block(
-                    self.clock_buttons_handler_ids[index])
-                self.clock_buttons[index].set_active(self.clock_running)
-                self.clock_buttons[index].handler_unblock(
-                    self.clock_buttons_handler_ids[index])
+            #self.clock_running = not self.clock_running
+            self.activate_clock(not self.clock_running)
 
     def letterbar_event(self, widget, event, label):
         keypress = gtk.gdk.Event(gtk.gdk.KEY_PRESS)
@@ -2315,9 +2326,7 @@ class PuzzleWindow:
 
     def puzzle_finished(self):
         self.notify('You have solved the puzzle!')
-        if self.clock_running:
-            for index in range(len(self.clock_buttons)):
-                self.clock_buttons[index].set_active(False)
+        self.activate_clock(False)
 
     def check_result(self, correct):
         if correct: msg = 'No mistakes found.'
@@ -2394,6 +2403,8 @@ class PuzzleWindow:
         if c.has_section('options'):
             if c.has_option('options', 'skip_filled'):
                 self.skip_filled = c.getboolean('options', 'skip_filled')
+            if c.has_option('options', 'clock_running'):
+                self.clock_running = c.getboolean('options', 'clock_running')
             if c.has_option('options', 'layout'):
                 self.layout = c.getint('options', 'layout')
             if c.has_option('options', 'checks_position'):
@@ -2419,6 +2430,7 @@ class PuzzleWindow:
         c = ConfigParser.ConfigParser()
         c.add_section('options')
         c.set('options', 'skip_filled', self.skip_filled)
+        c.set('options', 'clock_running', self.clock_running)
         c.set('options', 'layout', self.layout)
         c.set('options', 'checks_position', self.checks_position)
         c.set('options', 'keyboard_position', self.keyboard_position)
