@@ -1563,7 +1563,7 @@ class PuzzleWindow:
         r = dialog.run()
         dialog.destroy()
 
-        return (r == gtk.STOCK_OK)
+        return (r == gtk.RESPONSE_OK)
 
     def show_properties(self):
         show_props = gtk.Dialog('Properties', self.win)
