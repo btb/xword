@@ -2145,12 +2145,11 @@ class PuzzleWindow:
             if has_hildon:
                 if label == 'Escape':
                     button.tap_and_hold_setup(self.check_popup)
-                if label == 'F12':
+                elif label == 'F12':
                     button.tap_and_hold_setup(self.solve_popup)
 
-            #button.set_relief(gtk.RELIEF_NONE)
-            #button.set_focus_on_click(False)
-            button.connect('clicked',self.letterbar_event,label)
+            button.child.connect('button-release-event',
+                self.letterbar_event,label)
             table.attach(button, col, col+1, row, row+1)
 
             col += 1
@@ -2252,13 +2251,21 @@ class PuzzleWindow:
                 self.clock_buttons[index].handler_unblock(
                     self.clock_buttons_handler_ids[index])
 
-    def letterbar_event(self, widget, event):
+    def letterbar_event(self, widget, event, label):
         keypress = gtk.gdk.Event(gtk.gdk.KEY_PRESS)
-        keypress.keyval = int(gtk.gdk.keyval_from_name(event))
-        if len(event) is 1 and event.isalpha():
+        keypress.keyval = int(gtk.gdk.keyval_from_name(label))
+        if len(label) is 1 and label.isalpha():
             self.puzzle_key_event('',keypress)
         else:
-            self.key_event('',keypress)
+            if event.button == 3 and (label == 'F12' or label == 'Escape'):
+                if (label == 'F12'):
+                   self.solve_popup.popup(None,None,None,
+                       event.button,event.time)
+                else:
+                   self.check_popup.popup(None,None,None,
+                       event.button,event.time)
+            else:
+                self.key_event('',keypress)
 
     def button_event(self, widget, event, puzzle):
         if event.type is gtk.gdk.BUTTON_PRESS:
