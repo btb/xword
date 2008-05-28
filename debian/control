@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: xword
 Architecture: all
-Depends: python2.5, python2.5-gtk2, python2.5-hildon, python2.5-osso
+Depends: python2.5, python2.5-gtk2, python2.5-hildon, python2.5-osso, maemo-select-menu-location
 Description: Reads and writes crossword puzzles in the Across Lite file format
  Xword is a GTK program that works well for doing crossword puzzles in the
  Across Lite file format used by The New York Times and others. As well as a
