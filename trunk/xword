@@ -2228,7 +2228,10 @@ class PuzzleWindow:
         for index in range(len(self.clock_buttons)):
             sold = self.clock_buttons[index].get_label()
             if sold <> s: 
-                self.clock_buttons[index].set_label(s)
+                try:
+                    self.clock_buttons[index].set_label(s)
+                except:
+                    pass
 
         return True
 
