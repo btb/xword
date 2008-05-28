@@ -2259,7 +2259,6 @@ class PuzzleWindow:
         elif event == SOL_WRD_BTN:
             self.control.solve_word()
         else: # it must be the clock
-            #self.clock_running = not self.clock_running
             self.activate_clock(not self.clock_running)
 
     def letterbar_event(self, widget, event, label):
