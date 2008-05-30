@@ -2236,17 +2236,18 @@ class PuzzleWindow:
         return True
 
     def activate_clock(self, active=True):
-        self.clock_running = active
-        if self.clock_running:
-            self.clock_start = time.time()
-        else:
-            self.clock_time += (time.time() - self.clock_start)
-        for index in range(len(self.clock_buttons)):
-            self.clock_buttons[index].handler_block(
-                self.clock_buttons_handler_ids[index])
-            self.clock_buttons[index].set_active(active)
-            self.clock_buttons[index].handler_unblock(
-                self.clock_buttons_handler_ids[index])
+        if self.clock_running != active:
+            self.clock_running = active
+            if self.clock_running:
+                self.clock_start = time.time()
+            else:
+                self.clock_time += (time.time() - self.clock_start)
+            for index in range(len(self.clock_buttons)):
+                self.clock_buttons[index].handler_block(
+                    self.clock_buttons_handler_ids[index])
+                self.clock_buttons[index].set_active(active)
+                self.clock_buttons[index].handler_unblock(
+                    self.clock_buttons_handler_ids[index])
 
     def toolbar_event(self, widget, event):
         if event == 'Quit':
