@@ -2272,7 +2272,7 @@ class PuzzleWindow:
             self.puzzle_key_event('',keypress)
         else:
             if event.button == 3 and (label == 'F12' or label == 'Escape'):
-                if (label == 'F12'):
+                if label == 'F12':
                    self.solve_popup.popup(None,None,None,
                        event.button,event.time)
                 else:

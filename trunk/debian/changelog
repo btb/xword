@@ -2,10 +2,13 @@ xword (1.0.8) stable; urgency=low
 
   * Reformat 'Puzzle' menu. Now contains 'Check', 'Solve', and 'Clear' for
     each of 'Letter', 'Word', and 'Puzzle'.
-  * Alter toolbar buttons and include new buttons for 'Check Letter' and
-    'Solve Letter'.
+  * Split 'Toolbar Layout' into 'Solution Buttons' and 'Onscreen Keyboard',
+    both of which can be turned off or shown on any side of the screen.  Both
+    have a (synchronized) timer button.
+  * Onscreen keyboard's Check/Solve Word buttons now support tap-and-hold
+    (right-click). Show pop-up menu to Check/Solve a Letter/Word/Puzzle.
 
- -- Terrence Fleury <terrencegf@gmail.com>  Thu, 22 May 2008 18:13:00 -0500
+ -- Terrence Fleury <terrencegf@gmail.com>  Mon, 2 Jun 2008 14:29:00 -0500
 
 xword (1.0.7-1) stable; urgency=low
 
