@@ -1,6 +1,10 @@
 <html>
   <head>
     <title>xword for maemo</title>
+    <style type="text/css">
+      div.shot { width: 220px; margin-bottom: 20px; 
+                 float: left; text-align: center; }
+    </style>
   </head>
   <body>
 
@@ -11,6 +15,7 @@
       <a href="#installing">installing</a> | 
       <a href="#running">running</a> | 
       <a href="#desktop">desktop</a> | 
+      <a href="#trouble">troubleshooting</a> | 
       <a href="#bugs">bugs</a> 
     </div>
 
@@ -24,8 +29,8 @@
       href="http://www.pygtk.org/">pyGTK</a>.  It is based on the <a
       href="http://x-word.org/">original Xword program</a> written by Bill
     McCloskey.  The NIT version fixes a few bugs in the original code and
-    adds some functionality (e.g. built-in keyboard) to make the
-    program more usable on the NIT.
+    adds functionality (e.g. built-in keyboard) to make the program more
+    usable on the NIT.
     </p>
     <p>
     Before you go any farther, you should be aware of the following
@@ -33,9 +38,9 @@
     <ul>
       <li>The program is <b>sloooow</b>.  It is basically one very long
       python script.  On the NIT with large crossword puzzles, there is
-      sometimes a one second delay between input and screen update.
-      Fortunately, touchscreen inputs are queued so that you don't have to
-      wait for the screen to update before entering the next letter.
+      a noticeable delay between input and screen update.  Fortunately,
+      touchscreen inputs are queued so that you don't have to wait for the
+      screen to update before entering the next letter.
     </li>
     <li>The program has been tested with OS2006, OS2007, and OS2008, so it
     should run on any Nokia Internet Tablet, including the 770. The
@@ -122,15 +127,12 @@
       <ul>
         <li><b>Open...</b> - Open a .puz file.
         </li>
-        <li><b>Open Recent</b> - Show a list of the last five .puz files
-        opened.  This allows you to quickly (re)open recent puzzles.
+        <li><b>Open Recent &gt;</b> - Show a list of the last five .puz
+        files opened.  This allows you to quickly (re)open recent puzzles.
         </li>
         <li><b>Save As...</b> - Save the current puzzle to a new file.  
         Note that the state of the current puzzle gets saved
         automatically when you exit the program.
-        </li>
-        <li><b>Properties...</b> - Show the properties of the current
-        puzzle.  This includes the title, author, and copyright information.
         </li>
         <li><b>Quit</b> - Exit the xword application.
         </li>
@@ -143,24 +145,63 @@
     <b>Puzzle</b>
     <blockquote>
       <ul>
-        <li><b>Check Word</b> - Check the current word for correctness.  If
-        the word is correct, you will be shown a pop-up window saying "No
-        mistakes found".  Otherwise, you will be shown a pop-up window saying
-        "Incorrect" and the incorrect letters will be marked with a big "X"
-        through them as well as a small black triangle in the corner to keep
-        track of the letters you needed help with.
+        <li><b>Check &gt;</b> - Check the current item for correctness.  If
+        the item is correct, you will be shown a pop-up window saying "No
+        mistakes found".  Otherwise, you will be shown a pop-up window
+        saying "Incorrect" and the incorrect squares will be marked with a
+        big "X" through them.  When you correct the letters, a small black
+        triangle will be shown in the corner to keep track of the letters
+        you needed help with.
+        <blockquote>
+          <ul>
+            <li><b>Letter</b> - Check the current letter for correctness.
+            </li>
+            <li><b>Word</b> - Check the current word for correctness.  
+            </li>
+            <li><b>Puzzle</b> - Perform "Check Letter" on all currently
+             filled-in squares.  Thus, you can check a partially completed
+             puzzle.
+            </li>
+          </ul>
+        </blockquote>
         </li>
-        <li><b>Check Puzzle</b> - Perform "Check Word" on all currently
-        filled in words.  Thus, the puzzle does not need to be complete to
-        check it.
+        <li><b>Solve &gt;</b> - Fill in the correct letters for the current
+            item.  The letters that get filled in by the application will be
+            marked with a small red triangle in the corner to keep track of
+            the letters you needed help with.
+        <blockquote>
+          <ul>
+            <li><b>Letter</b> - Fill in the correct letter for the current
+            letter.
+            </li>
+            <li><b>Word</b> - Fill in the correct letters for the current
+            word.  
+            </li>
+            <li><b>Puzzle</b> - Fill in all letters for the puzzle.  Note
+            that you will be asked to confirm this selection before the
+            program shows you the solution.
+            </li>
+          </ul>
+        </blockquote>
         </li>
-        <li><b>Solve Word</b> - Fill in the correct letters for the current
-        word.  The letters that get filled in by the application will be
-        marked with a small red triangle in the corner to keep track of the
-        letters you needed help with.
+        <li><b>Clear &gt;</b> - Clear the letter(s) and any error marks for
+        the current item.  This allows you to "cheat" by removing all black
+        and red triangles showing the letters you needed help with.  
+        <blockquote>
+          <ul>
+            <li><b>Letter</b> - Clear the current square.
+            </li>
+            <li><b>Word</b> - Clear the current word.
+            </li>
+            <li><b>Puzzle</b> - Completely clear the current puzzle and
+            start from scratch.  Note that you will be asked to confirm this
+            selection before the program resets the puzzle.
+            </li>
+          </ul>
+        </blockquote>
         </li>
-        <li><b>Clear Puzzle</b> - Completely clear the current puzzle and
-        start from scratch.
+        <li><b>Properties...</b> - Show the properties of the current
+        puzzle.  This includes the title, author, and copyright information.
         </li>
         <li><b>Notepad...</b> - Read notes embedded in the puzzle, or
         make your own notes which will be saved along with the current
@@ -183,15 +224,22 @@
         which allows a 21x21 puzzle to fit full screen without scrollbars.
         You can set this value between 12 and 40 inclusive.
         </li>
-        <li><b>Toolbar Layout</b> - Set the location of the "toolbar".  The
-        toolbar can be turned off entirely to maximize screen real estate.
-        You can show the "Check" buttons, which duplicate the functionality
-        of the "Puzzle" menu above AND provide a clock timer.  Or you can
-        show the "Keyboard" which allows you to enter letters and duplicates
-        some functionality of the hardware buttons.  The toolbar can be
-        shown on the left or right side of the screen.
+        <li><b>Solution Buttons &gt;</b> - Set the location of the
+        check/solve buttons.  The default is "off".  Alternatively, you can
+        show them on any side of the screen.  You are given buttons to
+        conveniently "Check/Solve" a "Letter/Word", as well as a timer
+        button.
         </li>
-        <li><b>Word List Layout</b> - The "word list" is the list of
+        <li><b>Onscreen Keyboard &gt;</b> - Set the location of the onscreen
+        keyboard.  The default is "off".  Alternatively, you can show it on
+        any side of the screen.  The keyboard has the letters A-Z as well as
+        some extra buttons to aid in cursor movement.  There are also two
+        "Check/Solve" buttons and a timer button.  The "Check/Solve" buttons
+        check/solve the current word when clicked.  However, these buttons
+        also support "tap-and-hold" which brings up a pop-up menu to
+        check/solve the current letter, word, or puzzle.
+        </li>
+        <li><b>Word List Layout &gt;</b> - The "word list" is the list of
         horizontal and vertical clues.  The default is to show only the
         puzzle.  Alternatively, you can show the word list on the left,
         right, top, bottom, or some combination of these.
@@ -265,45 +313,61 @@
     <p>
     <img src="xword-keys.png" alt="Special keys"/>
     </p>
+    <p>
+    Note: The "Check Word" and "Solve Word" buttons also support
+    "tap-and-hold".  When you tap-hold these buttons, you get a pop-up
+    menu which enables you to check/solve a letter, word, or puzzle.
+    </p>
 
     <hr width="70%">
 
     <h2>screen shots</h2>
 
-    <p>
+    <div class="shot">
     <a href="xword-shot1.png"><img src="xword-shot1-small.png"
-      alt="screenshot1" align="center"/></a> Windowed view with keyboard on
+      alt="screenshot1"/></a><br/>Windowed view with keyboard on
     right
-    </p>
-    <p>
+    </div>
+    <div class="shot">
     <a href="xword-shot2.png"><img src="xword-shot2-small.png"
-      alt="screenshot1" align="center"/></a> Full screen view with keyboard on
-    right
-    </p>
-    <p>
+      alt="screenshot2"/></a><br/>Full screen view with solution buttons on
+    left and keyboard on right
+    </div>
+    <div class="shot">
     <a href="xword-shot3.png"><img src="xword-shot3-small.png"
-      alt="screenshot1" align="center"/></a> Full screen view with word list
-      on left and keyboard on right
-    </p>
-    <p>
+      alt="screenshot3" /></a><br/>Full screen view with word list
+      on left and solution buttons on right
+    </div>
+    <br clear="all"/>
+    <div class="shot">
     <a href="xword-shot4.png"><img src="xword-shot4-small.png"
-      alt="screenshot1" align="center"/></a> Windowed view with checks on left
-    </p>
-    <p>
+      alt="screenshot4"/></a><br/>Windowed view with minimum box size 
+    set to 14
+    </div>
+    <div class="shot">
     <a href="xword-shot5.png"><img src="xword-shot5-small.png"
-      alt="screenshot1" align="center"/></a> Windowed view with minimum box
-    size set to 14
-    </p>
-    <p>
+      alt="screenshot5"/></a><br/>Windowed view with minimum box
+    size set to 40 
+    </div>
+    <div class="shot">
     <a href="xword-shot6.png"><img src="xword-shot6-small.png"
-      alt="screenshot1" align="center"/></a> Windowed view with minimum box
-    size set to 40
-    </p>
-    <p>
-    <a href="xword-shot7.png"><img src="xword-shot7-small.png"
-      alt="screenshot1" align="center"/></a> "File-&gt;Properties..." pop-up
+      alt="screenshot6"/></a><br/>"Puzzle-&gt;Properties..." pop-up
     box
-    </p>
+    </div>
+    <br clear="all"/>
+    <div class="shot">
+    <a href="xword-shot7.png"><img src="xword-shot7-small.png"
+      alt="screenshot7"/></a><br/><a
+      href="http://behindmaemolines.blogspot.com/2008/03/screen-rotation-support-on-os2008-n8x0.html">Rotated</a> full screen with solution buttons
+    on top and keyboard on bottom
+    </div>
+    <div class="shot">
+    <a href="xword-shot8.png"><img src="xword-shot8-small.png"
+      alt="screenshot8"/></a><br/><a
+      href="http://behindmaemolines.blogspot.com/2008/03/screen-rotation-support-on-os2008-n8x0.html">Rotated</a> full screen with word list on
+    top/bottom and keyboard on bottom
+    </div>
+    <br clear="all"/>
 
     <hr/>
 
@@ -312,7 +376,7 @@
     So you want to solve crosswords on your home computer?  Well, you could
     simply download <a
       href="http://www.litsoft.com/across/alite/download.htm">Across
-      Lite</a> for your platform.  But you can also use the same xword
+      Lite</a> for your platform.  Or you can use the same xword
     program that runs on your NIT on any computer that supports <a
       href="http://www.python.org/">python</a>, <a
       href="http://www.pygtk.org/">pyGTK</a>, and <a
@@ -341,23 +405,44 @@
 
     <hr/>
 
+    <a name="trouble"><h1>troubleshooting</h1></a>
+    <p>
+    The program maintains two special hidden files/directories in your home
+    directory.  The "<tt>.crossword.cfg</tt>" file maintains the
+    configuration settings for the program.  The "<tt>.crossword_puzzles</tt>"
+    directory holds the current state for all .puz files you have opened in
+    the past.  If you ever have any problems starting the program or
+    (re)opening a .puz file, you may need to delete these files/directories.
+    To do so, open an xterm and type the following command.
+    </p>
+    <p>
+    <pre>
+        rm  -rf  ~/.crossword.cfg  ~/.crossword_puzzles/</pre>
+    </p>
+
+    <hr/>
+
     <a name="bugs"><h1>bugs</h1></a>
+    <p>
     Please report bugs to the <a
       href="https://garage.maemo.org/projects/xword">xword on maemo
       team</a>.  Here are some known bugs.
-    <ol>
-      <li>There is limited support for "locked" puzzles.  You cannot use the
-      "check word", "solve word", or "check puzzle" functions since the
-      answers are encrypted.  However, you can solve the puzzle on your own.
-      When an unlocked version of the puzzle comes out, you can continue
-      your partially filled in puzzle and then use the "check" functions.
+    </p>
+    <p>
+    <ul>
+      <li>There is limited support for "locked" puzzles.  You cannot use any
+      of the "check" or "solve" functions since the answers are encrypted.
+      However, you can solve the puzzle on your own.  When an unlocked
+      version of the puzzle comes out, you can continue your partially
+      filled-in puzzle and then use the "check/solve" functions.
       </li>
-    </ol>
+    </ul>
+    </p>
 
     <hr/>
 
     <div align="center">
-    Last update: May 21, 2008
+    Last update: June 2, 2008
     </div>
 
   </body>
