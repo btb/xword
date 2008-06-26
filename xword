@@ -2127,6 +2127,8 @@ class PuzzleWindow:
         viewport = gtk.Viewport()
         viewport.add(table)
         viewport.set_shadow_type(gtk.SHADOW_NONE)
+        if has_hildon:
+            viewport.modify_bg(gtk.STATE_NORMAL,gtk.gdk.color_parse('white'))
         scrolled.add(viewport)
 
         row = 0
