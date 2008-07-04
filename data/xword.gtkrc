@@ -1,0 +1,12 @@
+style "xword-ButtonFont" {
+  font_name = "Nokia Sans 14"
+}
+
+style "xword-viewport" {
+  bg[NORMAL] = "#ffffff"
+}
+
+widget_class "*.GtkButton.*GtkLabel" style "xword-ButtonFont"
+widget_class "*.GtkToggleButton.*GtkLabel" style "xword-ButtonFont"
+widget "*xword-ButtonFont" style "xword-ButtonFont"
+class "GtkViewport" style "xword-viewport"
