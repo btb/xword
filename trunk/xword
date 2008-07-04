@@ -87,10 +87,10 @@ MISTAKE = 1
 FIXED_MISTAKE = 2
 CHEAT = 3
 
-CHK_LTR_BTN = 'Check Ltr'
-CHK_WRD_BTN = 'Check Word'
-SOL_LTR_BTN = 'Solve Ltr'
-SOL_WRD_BTN = 'Solve Word'
+CHK_LTR_BTN = 'Check\nLetter'
+CHK_WRD_BTN = 'Check\nWord'
+SOL_LTR_BTN = 'Solve\nLetter'
+SOL_WRD_BTN = 'Solve\nWord'
 
 layouts = [
     ('Only Puzzle', 'puzzle'),
@@ -1426,6 +1426,9 @@ class PuzzleWindow:
 
         self.activate_clock(self.clock_running)
 
+        if self.fullscreen:
+            self.win.fullscreen()
+
     def enable_controls(self, enabled):
         def enable(w): w.set_property('sensitive', enabled)
 
@@ -2414,6 +2417,8 @@ class PuzzleWindow:
                 self.skip_filled = c.getboolean('options', 'skip_filled')
             if c.has_option('options', 'clock_running'):
                 self.clock_running = c.getboolean('options', 'clock_running')
+            if c.has_option('options', 'fullscreen'):
+                self.fullscreen = c.getboolean('options', 'fullscreen')
             if c.has_option('options', 'layout'):
                 self.layout = c.getint('options', 'layout')
             if c.has_option('options', 'checks_position'):
@@ -2440,6 +2445,7 @@ class PuzzleWindow:
         c.add_section('options')
         c.set('options', 'skip_filled', self.skip_filled)
         c.set('options', 'clock_running', self.clock_running)
+        c.set('options', 'fullscreen', self.fullscreen)
         c.set('options', 'layout', self.layout)
         c.set('options', 'checks_position', self.checks_position)
         c.set('options', 'keyboard_position', self.keyboard_position)
