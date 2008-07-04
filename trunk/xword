@@ -70,6 +70,12 @@ import ConfigParser
 HOME_PATH = os.sep+'usr'+os.sep+'share'+os.sep+'xword'
 if os.path.exists('data'+os.sep+'Left.xpm'): HOME_PATH = 'data'
 
+if has_hildon:
+    try:
+        gtk.rc_parse(HOME_PATH + os.sep + 'xword.gtkrc')
+    except:
+        pass
+
 MIN_BOX_SIZE = 12 
 MAX_BOX_SIZE = 40
 
@@ -1324,7 +1330,6 @@ class PuzzleWindow:
         self.default_loc = None
         self.last_file = None
         self.min_box_size = 20
-        self.keyboard_color = None
 
         title = 'Crossword Puzzle'
         if self.puzzle: title = 'Crossword Puzzle - %s' % self.puzzle.title
@@ -2128,12 +2133,6 @@ class PuzzleWindow:
         viewport = gtk.Viewport()
         viewport.add(table)
         viewport.set_shadow_type(gtk.SHADOW_NONE)
-        if self.keyboard_color != None:
-            try:
-                viewport.modify_bg(gtk.STATE_NORMAL,
-                                   gtk.gdk.color_parse(self.keyboard_color))
-            except:
-                self.keyboard_color = None
         scrolled.add(viewport)
 
         row = 0
@@ -2435,11 +2434,6 @@ class PuzzleWindow:
                 self.min_box_size = c.getint('options', 'min_box_size')
             if c.has_option('options', 'recent_list'):
                 self.recent.set(eval(c.get('options', 'recent_list')));
-            if c.has_option('options', 'keyboard_color'):
-                try:
-                    self.keyboard_color=eval(c.get('options', 'keyboard_color'))
-                except:
-                    self.keyboard_color=None
 
     def write_config(self):
         c = ConfigParser.ConfigParser()
@@ -2456,8 +2450,6 @@ class PuzzleWindow:
         c.set('options', 'last_file', repr(self.last_file))
         c.set('options', 'min_box_size', self.min_box_size)
         c.set('options', 'recent_list', repr(self.recent.recent_list))
-        if self.keyboard_color != None:
-            c.set('options', 'keyboard_color', repr(self.keyboard_color))
         c.write(file(os.path.expanduser('~' + os.sep + '.crossword.cfg'), 'w'))
 
 
