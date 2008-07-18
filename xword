@@ -87,10 +87,10 @@ MISTAKE = 1
 FIXED_MISTAKE = 2
 CHEAT = 3
 
-CHK_LTR_BTN = 'Check\nLetter'
-CHK_WRD_BTN = 'Check\nWord'
-SOL_LTR_BTN = 'Solve\nLetter'
-SOL_WRD_BTN = 'Solve\nWord'
+CHK_LTR_BTN = '  Check  \n  Letter'
+CHK_WRD_BTN = '  Check  \n   Word'
+SOL_LTR_BTN = '  Solve  \n  Letter'
+SOL_WRD_BTN = '  Solve  \n   Word'
 
 layouts = [
     ('Only Puzzle', 'puzzle'),
@@ -1433,6 +1433,8 @@ class PuzzleWindow:
         def enable(w): w.set_property('sensitive', enabled)
 
         enable(self.menu_items['save'])
+        enable(self.menu_items['close'])
+        enable(self.menu_items['delete'])
         enable(self.menu_items['check'])
         enable(self.menu_items['solve'])
         enable(self.menu_items['clear'])
@@ -1447,6 +1449,11 @@ class PuzzleWindow:
         enable(self.toolbar_items[SOL_WRD_BTN])
         for index in range(len(self.clock_buttons)):
             enable(self.clock_buttons[index])
+
+        for child in self.letterbarV.get_children():
+            enable(child)
+        for child in self.letterbarH.get_children():
+            enable(child)
 
     def setup_controller(self):
         self.control.connect('puzzle-finished', self.puzzle_finished)
@@ -1484,6 +1491,9 @@ class PuzzleWindow:
         self.load_list(DOWN)
         self.enable_controls(True)
         self.notify("Opened puzzle '" + self.puzzle.title + "'")
+
+        self.puzzle_widget.widget.hide_all()
+        self.puzzle_widget.widget.show_all()
 
         self.idle_event()
 
@@ -1902,6 +1912,8 @@ class PuzzleWindow:
         item.set_submenu(self.recent_menu)
         append(menu,'recent',item)
         append(menu,'save',create_menu_item('Save As...','save_file','S'))
+        append(menu,'close',create_menu_item('Close','close_file','C'))
+        append(menu,'delete',create_menu_item('Delete','delete_file','D'))
         if has_print:
             append(menu,'print',create_menu_item('Print...','print_file','P'))
         append(menu,'',gtk.SeparatorMenuItem())
@@ -2018,6 +2030,10 @@ class PuzzleWindow:
             self.open_recent(extra)
         elif action == 'save_file':
             self.save_file()
+        elif action == 'close_file':
+            self.close_file()
+        elif action == 'delete_file':
+            self.delete_file()
         elif action == 'print_file':
             self.print_file()
         elif action == 'check_letter':
@@ -2392,6 +2408,38 @@ class PuzzleWindow:
         else:
             dlg.destroy()
 
+    def close_file(self):
+        if self.puzzle: self.write_puzzle()
+        self.activate_clock(False)
+        self.clock_start = time.time()
+        self.clock_time = 0.0
+        self.puzzle = None
+        self.last_file = ''
+        self.control = DummyController()
+        self.setup_controller()
+        self.clue_widget.set_controller(self.control)
+        self.puzzle_widget.set_puzzle(self.puzzle, self.control)
+        self.load_list(ACROSS)
+        self.load_list(DOWN)
+        self.enable_controls(False)
+        self.puzzle_widget.widget.hide_all()
+        self.puzzle_widget.widget.show_all()
+        self.idle_event()
+
+    def delete_file(self):
+        if self.last_file: 
+            if self.ask('Permanently delete the current file?'):
+                if os.path.exists(self.last_file):
+                    try:
+                        binary_puzzle = self.get_puzzle_file(self.puzzle)
+                        os.remove(self.last_file)
+                        self.recent.delete(self.last_file)
+                        self.update_recent_menu()
+                        self.close_file()
+                        os.remove(binary_puzzle)
+                    except:
+                        pass
+        
     def open_recent(self, filename):
         if filename != None:
             if os.path.exists(filename):
