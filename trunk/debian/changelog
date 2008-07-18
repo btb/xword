@@ -1,3 +1,14 @@
+xword (1.0.9) stable; urgency=low
+
+  * Save/restore the "fullscreen" state.
+  * Add File->Close and File->Delete, so user can delete the .puz file from
+    disk (typically after the puzzle has been solved).
+  * Load custom GTK theme to make the onscreen keyboard background white (fix
+    for LCARS theme problem) and to shrink the button font so buttons can fit
+    in rotated screen view.
+
+ -- Terrence Fleury <terrencegf@gmail.com>  Fri, 18 Jul 2008 14:48:00 -0500
+
 xword (1.0.8) stable; urgency=low
 
   * Reformat 'Puzzle' menu. Now contains 'Check', 'Solve', and 'Clear' for
