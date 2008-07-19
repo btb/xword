@@ -4,4 +4,5 @@ data/icons/hicolor/26x26/apps/xword.png usr/share/icons/hicolor/26x26/apps/
 data/icons/hicolor/scalable/apps/xword.png usr/share/icons/hicolor/scalable/apps/
 data/*.png usr/share/xword/
 data/*.xpm usr/share/xword/
+data/xword.gtkrc usr/share/xword/
 xword usr/bin
