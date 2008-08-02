@@ -1494,6 +1494,7 @@ class PuzzleWindow:
 
         self.puzzle_widget.widget.hide_all()
         self.puzzle_widget.widget.show_all()
+        self.puzzle_widget.area.grab_focus()
 
         self.idle_event()
 
