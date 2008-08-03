@@ -1087,9 +1087,6 @@ class PuzzleController:
         if self.puzzle.is_puzzle_correct():
             self.do_update('puzzle-finished')
 
-    def erase_letter(self):
-        self.set_letter('')
-
     def move(self, dir, amt, skip_black=True):
         if self.mode == dir:
             ((x, y), _) = self.puzzle.next_cell(self.x, self.y,
@@ -1101,9 +1098,7 @@ class PuzzleController:
     def back_space(self):
         if self.puzzle.responses[self.x, self.y] == '':
             self.move(self.mode, -1, False)
-            self.erase_letter()
-        else:
-            self.erase_letter()
+        self.set_letter('')
 
     def next_word(self, incr):
         n = self.puzzle.incr_number(self.x, self.y, self.mode, incr)
@@ -1228,9 +1223,6 @@ class DummyController:
         pass
 
     def set_letter(self, letter):
-        pass
-
-    def erase_letter(self):
         pass
 
     def move(self, dir, amt):
@@ -2349,6 +2341,9 @@ class PuzzleWindow:
         c = self.control
         if len(name) is 1 and name.isalpha():
             c.input_char(self.skip_filled, name)
+            return True
+        elif name == 'space':
+            c.input_char(False,'')
             return True
         else:
             return False
