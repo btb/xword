@@ -1561,7 +1561,7 @@ class PuzzleWindow:
 
     def notify(self, msg):
         if has_hildon:
-            hildon.hildon_banner_show_information(self.win, None, msg)
+            hildon.hildon_banner_show_information(self.win, "qgn_note_infoprint", msg)
         else:
             self.status_bar.push(self.status_bar.get_context_id('stat'), msg)
 
@@ -2167,7 +2167,7 @@ class PuzzleWindow:
                 button = gtk.ToolButton(self.load_icon(
                          HOME_PATH + os.sep + label + '.xpm'), None)
 
-            if has_hildon:
+            if hasattr(button, "tap_and_hold_setup"):
                 if label == 'Escape':
                     button.tap_and_hold_setup(self.check_popup)
                 elif label == 'F12':
@@ -2363,7 +2363,7 @@ class PuzzleWindow:
             self.do_open_file(open_dlg.get_filename())
             open_dlg.destroy()
         
-        if has_hildon:
+        if has_hildon and hasattr(hildon, "FileChooserDialog"):
             dlg = hildon.FileChooserDialog(self.win,
                                            gtk.FILE_CHOOSER_ACTION_OPEN)
         else:
@@ -2386,7 +2386,7 @@ class PuzzleWindow:
             self.do_save_file(save_dlg.get_filename())
             save_dlg.destroy()
         
-        if has_hildon:
+        if has_hildon and hasattr(hildon, "FileChooserDialog"):
             dlg = hildon.FileChooserDialog(self.win,
                                            gtk.FILE_CHOOSER_ACTION_SAVE)
         else:
