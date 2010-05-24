@@ -1,15 +1,14 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-from xword.main import PuzzleWindow
-
-import gtk
+from xword.main import MainWindow
+ 
 import sys
+import gtk
 
 if __name__ == '__main__':
-    if len(sys.argv) <> 2:
-        p = None
-    else:
-        p = Puzzle(sys.argv[1])
+    if len(sys.argv) <> 2: fname = None
+    else: fname = sys.argv[1]
         
-    w = PuzzleWindow(p)
+    w = MainWindow(fname)
     gtk.main()
+
