@@ -51,7 +51,7 @@ import pango
 import sys
 import time
 import os, os.path
-import md5
+import hashlib
 import pickle
 import ConfigParser
 
@@ -61,7 +61,9 @@ try_utf_8_first = False
 HOME_PATH = '/usr/share/games/xword'
 CHECK_ICON = HOME_PATH + '/crossword-check.png'
 CHECK_ALL_ICON = HOME_PATH + '/crossword-check-all.png'
-SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
+SOLVE_WORD_ICON = HOME_PATH + '/crossword-solve.png'
+SOLVE_PUZZLE_ICON = HOME_PATH + '/crossword-solve.png'
+NOTEPAD_ICON = HOME_PATH + '/crossword-notepad.png'
 TIMER_ICON = HOME_PATH + '/crossword-clock.png'
 
 MIN_BOX_SIZE = 24
@@ -126,6 +128,11 @@ class BinaryFile:
     def read_byte(self):
         return ord(self.read_char())
 
+    def read_short(self):
+        lb = self.read_byte()
+        hb = self.read_byte()
+        return (hb << 8) + lb
+
     def read_string(self):
         if self.index == len(self.data): return ''
         s = ''
@@ -145,8 +152,45 @@ class BinaryFile:
         result = unicode(result, 'iso_8859-1')
         return result
 
+    def read_extra_section(self):
+        if self.index == len(self.data): return ''
+        s = ''
+        i = 0
+        while self.index < len(self.data) and i < 4:
+            s += self.read_char()
+            i += 1
+        if i >= len(self.data):
+            print 'Ignoring corrupted extra section title.'
+            return ''
+        if s != "GRBS" and s != "RTBL" and s != "LTIM" and s != "GEXT" and s != "RUSR":
+            print 'Ignoring unrecognized extra section:', s
+            return ''
+        # I don't think length can ever legally be 0 (ie < 1), hence "5" here (section hdr is 4).
+        if self.index < len(self.data) - 5:
+            l = self.read_short()
+            cs = self.read_short() # checksum is ignored!
+        else:
+            print 'Ignoring invalid extra action:', s
+            return ''
+        data = []
+        i = 0
+        while self.index < len(self.data) and i < l:
+            data.append(self.read_byte())
+            i += 1
+        if i >= len(self.data) - 1:
+            print 'Ignoring unterminated extra section.'
+            return ''
+        n = self.read_byte()
+        if n != 0:
+            print 'Ignoring non-null terminated extra section.'
+            return ''
+        if i >= len(self.data):
+            print 'Ignoring corrupted extra section.'
+            return ''
+        return (s, data)
+
     def hashcode(self):
-        m = md5.new()
+        m = hashlib.md5()
         m.update(''.join(self.data))
         return m.hexdigest()
 
@@ -216,6 +260,7 @@ class PersistentPuzzle:
 class Puzzle:
     def __init__(self, filename):
         self.load_file(filename)
+        self.setup()
 
     def load_file(self, filename):
         f = BinaryFile(filename)
@@ -224,6 +269,7 @@ class Puzzle:
         f.seek(0x2c)
         self.width = f.read_byte()
         self.height = f.read_byte()
+        self.num_clues = f.read_short()
 
         f.seek(0x34)
         self.answers = {}
@@ -252,14 +298,26 @@ class Puzzle:
         self.copyright = massage(f.read_string())
 
         self.clues = []
-        clue = f.read_string()
-        while clue:
-            self.clues.append(clue)
+        for i in range(self.num_clues):
             clue = f.read_string()
+            self.clues.append(clue)
 
         self.all_clues = self.clues[:]
 
-        self.setup()
+        self.notepad = massage(f.read_string())
+
+        # Kludge for when notes are included in title.  This sucks, but it's better than nothing.
+        # Will do nice fix when old printing code is replaced.
+        if len(self.title) > 35:
+            self.notepad += self.title
+            self.title = self.title[:35]
+
+        self.gext_data = None
+        extra = f.read_extra_section()
+        while extra:
+            if extra[0] == "GEXT":
+                self.gext_data = extra[1]
+            extra = f.read_extra_section()
 
     def setup(self):
         self.across_clues = {}
@@ -322,7 +380,7 @@ class Puzzle:
         s1 = ''.join(data)
         s2 = ';'.join(self.all_clues)
 
-        m = md5.new()
+        m = hashlib.md5()
         m.update(s1 + s2)
         return m.hexdigest()
 
@@ -338,6 +396,13 @@ class Puzzle:
 
     def is_black(self, x, y):
         return self.responses.get((x, y), '.') == '.'
+
+    def is_circled(self, x, y):
+        if self.gext_data:
+            bits = self.gext_data[y * self.height + x]
+            return (bits & 0x80) != 0
+        else:
+            return False
 
     def clue(self, x, y, mode):
         if mode is ACROSS: return self.across_clues[self.across_map[x, y]]
@@ -541,10 +606,20 @@ class ClueArea:
                 self.add_space(0.5)
                 if first: first = False
 
+    def add_notepad(self):
+        self.open_group()
+        self.add_label("Note:")
+        self.add_space(1.0)
+        self.add_wrapped_text(self.text_width, self.clue_font, self.puzzle.notepad)
+        self.close_group()
+
     def setup(self):
         self.add_column('Across', ACROSS)
         self.add_space(1.0)
         self.add_column('Down', DOWN)
+        if self.puzzle.notepad:
+            self.add_space(1.0)
+            self.add_notepad()
 
     def width(self):
         return (self.col_num + 1) * self.col_width
@@ -557,15 +632,25 @@ class PuzzlePrinter:
         (left, bottom, right, top) = r
 
         h = top - bottom
-        size = int(h * 0.7)
-        font = PrintFont('Serif', 'Regular', size)
+        size0 = int(h * 0.5)
+        font = PrintFont('Serif', 'Regular', size0)
 
         self.gpc.setfont(font.font)
         width = font.measure_text(self.puzzle.title)
         x0 = left + (right - left - width)/2
-        y0 = top - size
+        y0 = top - size0
         self.gpc.moveto(x0, y0)
         self.gpc.show(self.puzzle.title)
+
+        size1 = int(h * 0.3)
+        font = PrintFont('Serif', 'Regular', size1)
+        self.gpc.setfont(font.font)
+        str = self.puzzle.author + " -- (c) " + self.puzzle.copyright
+        width = font.measure_text(str)
+        x0 = left + (right - left - width)/2
+        y0 = top - size0 - size1 - (size1/2)
+        self.gpc.moveto(x0, y0)
+        self.gpc.show(str)
 
     def draw_box(self, x, y, r):
         (left, bottom, right, top) = r
@@ -592,6 +677,12 @@ class PuzzlePrinter:
             gpc.lineto(right, top)
             gpc.lineto(right, top - self.box_size*0.3)
             gpc.fill()
+
+        if self.puzzle.is_circled(x, y):
+            radius = (right - left) / 2
+            gpc.newpath()
+            gpc.arcto(left + radius, bottom + radius, radius, 0, (360 * 384) - 1, 0)
+            gpc.stroke()
 
     def min_puzzle_size(self, r):
         puzzle = self.puzzle
@@ -769,7 +860,7 @@ class PuzzleWidget:
         self.sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.sw.add_with_viewport(self.area)
 
-        self.widget = self.sw
+        self.widget = self.sw # Oh the humanity!  Why?
         self.set_puzzle(puzzle, control)
 
     def set_puzzle(self, puzzle, control):
@@ -849,7 +940,17 @@ class PuzzleWidget:
                            (x0 + self.box_size, y0 + length)])
         self.gc.set_foreground(self.black)
 
-    def draw_box_data(self, x0, y0, n, letter, error):
+    def draw_circle(self, x0, y0, n):
+        view = self.area.window
+
+        self.gc.set_foreground(self.black)
+        if n:
+            view.draw_arc(self.gc, False, x0, y0, self.box_size, self.box_size,
+                          (180 - 30) * 64, (270 + (30 * 2)) * 64)
+        else:
+            view.draw_arc(self.gc, False, x0, y0, self.box_size, self.box_size, 0, 360 * 64)
+
+    def draw_box_data(self, x0, y0, n, letter, error, circle):
         view = self.area.window
 
         self.pango.set_font_description(self.num_font)
@@ -873,6 +974,9 @@ class PuzzleWidget:
         elif error == CHEAT:
             self.draw_triangle(x0, y0, self.red, True)
             self.draw_triangle(x0, y0, self.black, False)
+
+        if circle:
+            self.draw_circle(x0, y0, n)
 
     def draw_box(self, x, y):
         view = self.area.window
@@ -901,7 +1005,7 @@ class PuzzleWidget:
         else:
             n = ''
 
-        self.draw_box_data(x0, y0, n, letter, error)
+        self.draw_box_data(x0, y0, n, letter, error, self.puzzle.is_circled(x, y))
 
     def translate_position(self, x, y):
         x -= self.x
@@ -962,6 +1066,7 @@ class ClueWidget:
 class PuzzleController:
     def __init__(self, puzzle):
         self.puzzle = puzzle
+        self.solved = False
 
         self.handlers = []
         self.selection = []
@@ -987,6 +1092,8 @@ class PuzzleController:
         if mode is ACROSS:
             index = x
             while not self.puzzle.is_black(index, y):
+                # This seems goofy.  Why append when finding the left bound?  We'll get all these
+                # squares when we search for the right bound below.  This way we can get duplicates.
                 sel.append((index, y))
                 index -= 1
             index = x+1
@@ -996,6 +1103,9 @@ class PuzzleController:
         else:
             index = y
             while not self.puzzle.is_black(x, index):
+                # This seems goofy.  Why append when finding the top bound?  We'll get all these
+                # squares when we search for the bottom bound below.  This way we can get
+                # duplicates.
                 sel.append((x, index))
                 index -= 1
             index = y+1
@@ -1051,7 +1161,8 @@ class PuzzleController:
         self.do_update('box-update', self.x, self.y)
 
         if self.puzzle.is_puzzle_correct():
-            self.do_update('puzzle-finished')
+            if not self.solved:
+                self.do_update('puzzle-finished')
 
     def erase_letter(self):
         self.set_letter('')
@@ -1113,6 +1224,8 @@ class PuzzleController:
 
         self.do_update('check-puzzle-result', correct)
 
+        return correct
+
     def solve_word(self):
         for (x, y) in self.selection:
             if not self.puzzle.is_cell_correct(x, y):
@@ -1121,7 +1234,16 @@ class PuzzleController:
                 self.do_update('box-update', x, y)
                     
         if self.puzzle.is_puzzle_correct():
-            self.do_update('puzzle-finished')
+            if not self.solved:
+                self.do_update('puzzle-finished')
+
+    def solve_puzzle(self):
+        for n in range(1, self.puzzle.final_number(ACROSS)+1):
+            k = self.puzzle.number_map[n]
+            if self.puzzle.across_map.has_key(k):
+                self.select_word(ACROSS, n)
+                self.solve_word()
+        self.solved = True
 
     def is_selected(self, x, y):
         return ((x, y) in self.selection)
@@ -1185,6 +1307,9 @@ class DummyController:
     def solve_word(self):
         pass
 
+    def solve_puzzle(self):
+        pass
+
     def is_selected(self, x, y):
         return False
 
@@ -1232,7 +1357,7 @@ class PuzzleWindow:
         
         vbox = gtk.VBox()
         win.add(vbox)
-        vbox = vbox
+        vbox = vbox # huh?
 
         self.cur_layout = None
 
@@ -1263,6 +1388,9 @@ class PuzzleWindow:
         self.control.signal()
         self.puzzle_widget.area.grab_focus()
 
+        if self.control.check_puzzle():
+            self.control.solved = True
+
     def enable_controls(self, enabled):
         def enable(w): w.set_property('sensitive', enabled)
         
@@ -1271,6 +1399,9 @@ class PuzzleWindow:
         enable(self.toolbar_items['Check Word'])
         enable(self.toolbar_items['Check Puzzle'])
         enable(self.toolbar_items['Solve Word'])
+        enable(self.toolbar_items['Solve Puzzle'])
+        if self.puzzle and self.puzzle.notepad:
+            enable(self.toolbar_items['Show Notepad'])
         enable(self.clock_button)
 
     def setup_controller(self):
@@ -1285,7 +1416,8 @@ class PuzzleWindow:
     def do_open_file(self, fname):
         if self.clock_running:
             self.clock_button.set_active(False)
-        
+
+        # If unsaved, should put up a dialog asking whether to save or not.
         if self.puzzle: self.write_puzzle()
 
         self.set_puzzle(Puzzle(fname))
@@ -1297,6 +1429,8 @@ class PuzzleWindow:
         self.load_list(ACROSS)
         self.load_list(DOWN)
         self.enable_controls(True)
+
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
 
         self.idle_event()
 
@@ -1321,7 +1455,7 @@ class PuzzleWindow:
             self.clock_time = pp.clock
         except:
             self.notify('The saved puzzle is corrupted. It will not be used.')
-            os.remove(fname)
+            os.remove(fname) # Wow!
 
         f.close()
 
@@ -1359,6 +1493,7 @@ class PuzzleWindow:
         f.close()
 
     def exit(self):
+        # Should be asked whether to write this stuff or not.
         self.write_puzzle()
         self.write_config()
         gtk.main_quit()
@@ -1469,6 +1604,7 @@ class PuzzleWindow:
     def state_event(self, w, event):
         state = int(event.new_window_state)
         self.maximized = (state & gtk.gdk.WINDOW_STATE_MAXIMIZED) <> 0
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
 
     def resize_window(self, widget, allocation):
         if not self.maximized:
@@ -1543,6 +1679,7 @@ class PuzzleWindow:
         return menubar
 
     def menu_selected(self, item, action):
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
         if action == MENU_QUIT:
             self.exit()
         elif action == MENU_CLOSE:
@@ -1613,8 +1750,13 @@ class PuzzleWindow:
                                  'Check a word')
         self.create_toolbar_item('Check Puzzle', CHECK_ALL_ICON,
                                  'Check all words in the puzzle')
-        self.create_toolbar_item('Solve Word', SOLVE_ICON,
+        self.create_toolbar_item('Solve Word', SOLVE_WORD_ICON,
                                  'Cheat to get a word')
+        self.create_toolbar_item('Solve Puzzle', SOLVE_PUZZLE_ICON,
+                                 'Cheat to solve the entire puzzle')
+        if self.puzzle and self.puzzle.notepad:
+            self.create_toolbar_item('Show Notepad', NOTEPAD_ICON,
+                                     'Show the Notepad for the puzzle')
         self.create_separator_toolitem()
         b = self.create_toolbar_item('', TIMER_ICON,
                                      'Enable or disable the clock', True)
@@ -1653,17 +1795,20 @@ class PuzzleWindow:
         self.trees[mode].set_model(store)
 
     def select_changed(self, tree, path, column, mode):
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
         store = tree.get_model()
         n = store.get_value(store.get_iter(path), 0)
         self.control.select_word(mode, n)
         
     def across_update(self, an):
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
         if self.tree_paths.has_key(ACROSS):
             selection = self.trees[ACROSS].get_selection()
             selection.select_path(self.tree_paths[ACROSS][an])
             self.trees[ACROSS].scroll_to_cell(self.tree_paths[ACROSS][an])
 
     def down_update(self, dn):
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
         if self.tree_paths.has_key(DOWN):
             selection = self.trees[DOWN].get_selection()
             selection.select_path(self.tree_paths[DOWN][dn])
@@ -1682,6 +1827,7 @@ class PuzzleWindow:
         return True
 
     def toolbar_event(self, widget, event):
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
         if event == 'Quit':
             self.exit()
         elif event == 'Check Word':
@@ -1690,6 +1836,10 @@ class PuzzleWindow:
             self.control.check_puzzle()
         elif event == 'Solve Word':
             self.control.solve_word()
+        elif event == 'Solve Puzzle':
+            self.control.solve_puzzle()
+        elif event == 'Show Notepad':
+            self.notify(self.puzzle.notepad)
         else: # it must be the clock
             self.clock_running = not self.clock_running
             if self.clock_running:
@@ -1698,12 +1848,14 @@ class PuzzleWindow:
                 self.clock_time += (time.time() - self.clock_start)
 
     def button_event(self, widget, event, puzzle):
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
         if event.type is gtk.gdk.BUTTON_PRESS:
             (x, y) = puzzle.translate_position(event.x, event.y)
             if event.button is 3: self.control.switch_mode()
             self.control.move_to(x, y)
 
     def key_event(self, item, event):
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
         name = gtk.gdk.keyval_name(event.keyval)
         
         c = self.control
@@ -1720,6 +1872,7 @@ class PuzzleWindow:
         return True
 
     def puzzle_key_event(self, item, event):
+        self.status_bar.push(self.status_bar.get_context_id('stat'), '')
         name = gtk.gdk.keyval_name(event.keyval)
         if name is None:
             return False
@@ -1861,3 +2014,6 @@ if __name__ == '__main__':
         
     w = PuzzleWindow(p)
     gtk.main()
+
+
+# xword ends here.
