@@ -51,6 +51,9 @@ import md5
 import pickle
 import ConfigParser
 
+from optparse import OptionParser
+try_utf_8_first = False
+
 HOME_PATH = '/usr/share/games/xword'
 CHECK_ICON = HOME_PATH + '/crossword-check.png'
 CHECK_ALL_ICON = HOME_PATH + '/crossword-check-all.png'
@@ -130,6 +133,11 @@ class BinaryFile:
         result = s
         ellipsis_char = 133
         result = result.replace(chr(ellipsis_char), '...')
+        if try_utf_8_first:
+            try:
+                return unicode(result, 'utf_8')
+            except:
+                pass
         result = unicode(result, 'iso_8859-1')
         return result
 
@@ -1811,10 +1819,21 @@ class PuzzleWindow:
         c.write(file(os.path.expanduser('~/.crossword.cfg'), 'w'))
 
 if __name__ == '__main__':
-    if len(sys.argv) <> 2:
+    
+    parser = OptionParser(usage="Usage: %prog [OPTIONS] [PUZZLE-FILENAME]")
+    parser.add_option('-u', '--utf8', dest="utf8", action="store_true",
+                      default=False, help="Try UTF-8 decoding of clues first.")
+    options,args = parser.parse_args()
+
+    try_utf_8_first = options.utf8
+    
+    if len(args) == 0:
         p = None
+    elif len(args) == 1:
+        p = Puzzle(args[0])
     else:
-        p = Puzzle(sys.argv[1])
+        parser.print_help()
+        sys.exit(1)
         
     w = PuzzleWindow(p)
     gtk.main()
