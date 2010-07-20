@@ -263,35 +263,39 @@ class Puzzle:
         number = 1
         for y in range(self.height):
             for x in range(self.width):
-                is_fresh_x = self.is_black(x-1, y)
-                is_fresh_y = self.is_black(x, y-1)
+                new_across = False
+                new_down = False
 
                 if not self.is_black(x, y):
-                    if is_fresh_x:
-                        self.across_map[x, y] = number
-                        if self.is_black(x+1, y):
-                            self.across_clues[number] = ''
-                        else:
-                            self.across_clues[number] = self.clues.pop(0)
-                    else: self.across_map[x, y] = self.across_map[x-1, y]
-                    
-                    if is_fresh_y:
-                        self.down_map[x, y] = number
-                        if self.is_black(x, y+1): # see April 30, 2006 puzzle
-                            self.down_clues[number] = ''
-                        else:
-                            self.down_clues[number] = self.clues.pop(0)
-                    else: self.down_map[x, y] = self.down_map[x, y-1]
+                    if ((x, y) not in self.across_map and
+                            not self.is_black(x+1, y)):
+                        new_across = True
+                        self.across_clues[number] = self.clues.pop(0)
 
-                    if is_fresh_x or is_fresh_y:
-                        self.is_across[number] = is_fresh_x
-                        self.is_down[number] = is_fresh_y
+                        for x_ in range(x, self.width):
+                            if self.is_black(x_, y):
+                                break
+
+                            self.across_map[x_, y] = number
+                    
+                    if ((x, y) not in self.down_map and
+                            # see April 30, 2006 puzzle
+                            not self.is_black(x, y+1)):
+                        new_down = True
+                        self.down_clues[number] = self.clues.pop(0)
+
+                        for y_ in range(y, self.height):
+                            if self.is_black(x, y_):
+                                break
+
+                            self.down_map[x, y_] = number
+
+                    if new_across or new_down:
+                        self.is_across[number] = new_across
+                        self.is_down[number] = new_down
                         self.number_map[number] = (x, y)
                         self.number_rev_map[x, y] = number
                         number += 1
-                else:
-                    self.across_map[x, y] = 0
-                    self.down_map[x, y] = 0
         self.max_number = number-1
 
     def hashcode(self):
@@ -996,8 +1000,15 @@ class PuzzleController:
                 self.do_update('box-update', xp, yp)
 
             self.do_update('title-update')
-            self.do_update('across-update', self.puzzle.number(x, y, ACROSS))
-            self.do_update('down-update', self.puzzle.number(x, y, DOWN))
+
+            if (x, y) not in self.puzzle.mode_maps[self.mode]:
+                self.switch_mode()
+
+            if (x, y) in self.puzzle.across_map:
+                self.do_update('across-update', self.puzzle.number(x, y, ACROSS))
+
+            if (x, y) in self.puzzle.down_map:
+                self.do_update('down-update', self.puzzle.number(x, y, DOWN))
 
     def select_word(self, mode, n):
         if mode <> self.mode: self.switch_mode()
