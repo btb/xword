@@ -946,9 +946,7 @@ class PuzzleController:
         self.selection = []
 
         self.mode = ACROSS
-        (x, y) = (0, 0)
-        if puzzle.is_black(x, y):
-            ((x, y), _) = puzzle.next_cell(0, 0, ACROSS, 1, True)
+        x, y = self.puzzle.number_map[self.puzzle.first_number(ACROSS)]
         self.move_to(x, y)
 
     def connect(self, ev, handler):
