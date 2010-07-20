@@ -382,6 +382,14 @@ class Puzzle:
             if mode == DOWN and self.is_down[n]: break
         return n
 
+    def first_number(self, mode):
+        n = 1
+        while True:
+            if mode == ACROSS and self.is_across[n]: break
+            if mode == DOWN and self.is_down[n]: break
+            n += 1
+        return n
+
     def final_number(self, mode):
         n = self.max_number
         while True:
@@ -1048,7 +1056,7 @@ class PuzzleController:
         n = self.puzzle.incr_number(self.x, self.y, self.mode, incr)
         if n == 0:
             self.switch_mode()
-            if incr == 1: n = 1
+            if incr == 1: n = self.puzzle.first_number(self.mode)
             else: n = self.puzzle.final_number(self.mode)
         (x, y) = self.puzzle.number_map[n]
         (x, y) = self.puzzle.find_blank_cell(x, y, self.mode, 1)
