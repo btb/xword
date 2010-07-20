@@ -1700,6 +1700,8 @@ class PuzzleWindow:
 
     def puzzle_key_event(self, item, event):
         name = gtk.gdk.keyval_name(event.keyval)
+        if name is None:
+            return False
         c = self.control
         if len(name) is 1 and name.isalpha():
             c.input_char(self.skip_filled, name)
