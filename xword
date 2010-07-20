@@ -51,7 +51,7 @@ import md5
 import pickle
 import ConfigParser
 
-HOME_PATH = os.path.dirname(sys.argv[0])
+HOME_PATH = '/usr/share/games/xword'
 CHECK_ICON = HOME_PATH + '/crossword-check.png'
 CHECK_ALL_ICON = HOME_PATH + '/crossword-check-all.png'
 SOLVE_ICON = HOME_PATH + '/crossword-solve.png'
