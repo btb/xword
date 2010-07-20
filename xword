@@ -36,12 +36,16 @@ import gtk
 import gtk.gdk
 import gobject
 
+has_print = False
+has_print_ui = False
+
 try:
     import gnomeprint
-    import gnomeprint.ui
     has_print = True
+    import gnomeprint.ui
+    has_print_ui = True
 except:
-    has_print = False
+    pass
 
 import pango
 import sys
@@ -740,6 +744,15 @@ class PuzzlePrinter:
         dialog.connect('response', self.do_print, job)
         dialog.set_transient_for(win)
         dialog.show()
+
+    def print_puzzle_to_file(self,postscript_file):
+        config = gnomeprint.config_default()
+        job = gnomeprint.Job(config)
+        job.print_to_file(postscript_file)
+        self.gpc = job.get_context()
+        self.draw(config)
+        job.close()
+        job.print_()
 
 class PuzzleWidget:
     def __init__(self, puzzle, control):
@@ -1783,7 +1796,7 @@ class PuzzleWindow:
                 dlg.destroy()
 
     def print_puzzle(self):
-        if has_print:
+        if has_print_ui:
             pr = PuzzlePrinter(self.puzzle)
             pr.print_puzzle(self.win)
         else:
@@ -1823,14 +1836,25 @@ if __name__ == '__main__':
     parser = OptionParser(usage="Usage: %prog [OPTIONS] [PUZZLE-FILENAME]")
     parser.add_option('-u', '--utf8', dest="utf8", action="store_true",
                       default=False, help="Try UTF-8 decoding of clues first.")
+    parser.add_option('-p', dest="postscript_file",
+                      help="Output a postscript version of the crossword")
     options,args = parser.parse_args()
 
     try_utf_8_first = options.utf8
     
     if len(args) == 0:
         p = None
+        if options.postscript_file:
+            print "Warning: ignoring the -p parameter"
     elif len(args) == 1:
         p = Puzzle(args[0])
+        if options.postscript_file:
+            if not has_print:
+                print "The Python wrapper for gnomeprint must be installed in order to output to postscript"
+                sys.exit(2)
+            pp = PuzzlePrinter(p)
+            pp.print_puzzle_to_file(options.postscript_file)
+            sys.exit(0)
     else:
         parser.print_help()
         sys.exit(1)
