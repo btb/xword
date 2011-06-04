@@ -311,11 +311,11 @@ class MainWindow:
         self.puzzle_widget.area.grab_focus()
 
     def show_title(self):
-        title = 'Crossword Puzzle'
+        title = 'Xword Puzzle'
         data = ''
         locked = False
         if self.puzzle:
-            title = 'Crossword Puzzle - %s' % self.puzzle.title
+            title = 'Xword Puzzle - %s' % self.puzzle.title
             data = self.puzzle.title + '  ' + self.puzzle.author
             locked = self.puzzle.is_locked()
         
