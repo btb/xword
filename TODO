@@ -1,11 +1,29 @@
-# Verify puzzle checksums
+Before Release
+==============
+
 # Fix printing (Windows bug, Linux bug, enlarge support)
 # Test fresh install, install over old version
-# Make sure keyboard shortcuts (including arrows & delete key) match AL
-# Package everything into one script file
-# Create Windows installer
+# Make sure keyboard shortcuts (including arrows & delete key) match Across Lite
 # Possible problem: Open puzzle in locked mode, reopen in unlocked, close,
 #   then when you run xword it opens back in locked
+
+# UI improvements: directories, filters, menus, toolbars
+
+# Use file date for unknown crossword date
+
+Next Release
+============
+
+# Use IPC to manage multiple instances
+
+# Verify puzzle checksums
+# Handle Rebus squares
+
+# Organizer list of clock and filter/sort
+
+
+Future Releases
+===============
 
 # Use a custom TreeModel implementation backed by an SQLite database
 http://www.johnstowers.co.nz/blog/index.php/2007/12/06/the-big-move/
@@ -14,12 +32,10 @@ http://docs.python.org/library/sqlite3.html
 # Use Glade
 http://www.micahcarrick.com/gtk-glade-tutorial-part-1.html
 
-# Migrate to PyGObject from PyGTK
-http://live.gnome.org/PyGObject/IntrospectionPorting
-
 # Translate all UI strings
 https://prioritiseapp.wordpress.com/2010/07/28/translating-a-pygtk-application/
 
-# UI improvements: directories, filters, menus, toolbars
+# Create Windows installer
 
-# Try crossword files from other sources
+# Migrate to PyGObject from PyGTK
+http://live.gnome.org/PyGObject/IntrospectionPorting

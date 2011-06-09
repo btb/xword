@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 import puzzle
 import printing
+import model
 
 import pygtk
 pygtk.require('2.0')
@@ -58,7 +59,6 @@ import pickle
 import ConfigParser
 import tempfile
 import subprocess
-import datetime
 
 CONFIG_DIR = os.path.expanduser(os.path.join('~', '.xword'))
 def config_path(name):
@@ -171,7 +171,8 @@ class OrganizerWindow:
         
         pbar = self.create_progress_bar(window)
         
-        model = self.create_model(store, pbar.set_fraction)
+        self.model = model.Model(store, config_path('crossword_puzzles'))
+        self.model.create_model(pbar.set_fraction, self.is_done)
 
         if self.done:
             return
@@ -211,8 +212,8 @@ class OrganizerWindow:
         scroll = gtk.ScrolledWindow()
         mainbox.pack_start(scroll, True, True, 0)
         
-        modelFilter = self.filter_model(model)
-        modelSort = self.sort_model(modelFilter)
+        modelSort = self.model.get_model()
+        modelSort.set_sort_column_id(model.MODEL_DATE, gtk.SORT_DESCENDING)
         tree = self.create_list_view(modelSort)
         scroll.add(tree)
         self.tree = tree
@@ -270,241 +271,54 @@ class OrganizerWindow:
         
         return pbar
         
-    def create_model(self, store, update_func):
-        # Columns: hashcode, title, author, copyright, hsize, vsize, squares, complete, errors, cheats, location, date, source, title
-        model = gtk.ListStore(str, str, str, str, int, int, int ,int, int, int, str, gobject.TYPE_PYOBJECT, str, str)
-        
-        modelHashes = {}
-        
-        dir = '/home/cdale/doc/NYTxword'
-        
-        scanTotal = float(len(os.listdir(dir)) + len(store.recent_list()) + len(os.listdir(config_path('crossword_puzzles'))))
-        scanned = 0
-        
-        for f in os.listdir(dir):
-            scanned += 1
-            update_func(float(scanned) / scanTotal)
-            while gtk.events_pending():
-                gtk.main_iteration()
-            if self.done:
-                return
-                
-            fname = os.path.join(dir, f) 
-            if fname.endswith('.puz') and os.path.isfile(fname):
-                p = puzzle.Puzzle(fname)
-                hashcode = p.hashcode()
-                squares = 0
-                date = None
-                title = ''
-                HEADER_NYTIMES = 'NY Times, '
-                source = 'Unknown'
-                if p.title.startswith(HEADER_NYTIMES):
-                    source = 'NY Times'
-                    title = ' '.join(p.title[len(HEADER_NYTIMES):].replace(u'\xa0', u' ').split(' ')[4:])
-                    notePos = title.upper().find('NOTE:')
-                    if notePos >= 0:
-                        title = title[:notePos].strip()
-                    bracketStart = title.find('(')
-                    if bracketStart >= 0:
-                        title = title[:bracketStart].strip()
-                    dateStr = ' '.join(p.title[len(HEADER_NYTIMES):].replace(u'\xa0', u' ').split(' ')[:4])
-                    date = datetime.datetime.strptime(dateStr, '%a, %b %d, %Y')
-                for ((x, y), a) in p.answers.items():
-                    if a != '.':
-                        squares += 1
-                if hashcode in modelHashes:
-                    if model.iter_is_valid(modelHashes[hashcode]):
-                        model.set(modelHashes[hashcode], 1, p.title, 2, p.author, 3, p.copyright, 10, fname, 11, date, 12, source, 13, title)
-                    else:
-                        for row in model:
-                            if row[0] == hashcode:
-                                row[1] = p.title.replace(u'\xa0', u' ').strip()
-                                row[2] = p.author.replace(u'\xa0', u' ').strip()
-                                row[3] = p.copyright.replace(u'\xa0', u' ').strip()
-                                row[10] = fname
-                                row[11] = date
-                                row[12] = source
-                                row[13] = title
-                                modelHashes[hashcode] = row.iter
-                                break
-                else:
-                    iter = model.append([hashcode, p.title, p.author, p.copyright, p.width, p.height, squares, 0, 0, 0, fname, date, source, title])
-                    modelHashes[hashcode] = iter
-        
-        for (title, hash) in store.recent_list():
-            scanned += 1
-            update_func(float(scanned) / scanTotal)
-            while gtk.events_pending():
-                gtk.main_iteration()
-            if self.done:
-                return
-            
-            fname = store.get_recent(hash)
-            if fname and os.path.exists(fname):
-                p = puzzle.Puzzle(fname)
-                hashcode = p.hashcode()
-                if hashcode not in modelHashes:
-                    squares = 0
-                    for ((x, y), a) in p.answers.items():
-                        if a != '.':
-                            squares += 1
-                    iter = model.append([hashcode, p.title, p.author, p.copyright, p.width, p.height, squares, 0, 0, 0, fname, None, '', ''])
-                    modelHashes[hashcode] = iter
-        
-        dir = config_path('crossword_puzzles')
-        for f in os.listdir(dir):
-            scanned += 1
-            update_func(float(scanned) / scanTotal)
-            while gtk.events_pending():
-                gtk.main_iteration()
-            if self.done:
-                return
-                
-            fname = os.path.join(dir, f)
-            if os.path.isfile(fname):
-                pp = self.load_puzzle(fname)
-                if pp:
-                    hsize = 0
-                    vsize = 0
-                    squares = 0
-                    complete = 0
-                    errors = 0
-                    cheats = 0
-                    for ((x, y), r) in pp.responses.items():
-                        if x > hsize: hsize = x
-                        if y > vsize: vsize = y
-                        if r != '.':
-                            squares += 1
-                            if r != '':
-                                complete += 1
-                    for ((x, y), e) in pp.errors.items():
-                        if e == puzzle.MISTAKE or e == puzzle.FIXED_MISTAKE:
-                            errors += 1
-                        if e == puzzle.CHEAT:
-                            cheats += 1
-                    if f in modelHashes:
-                        if model.iter_is_valid(modelHashes[f]):
-                            model.set(modelHashes[f], 7, complete, 8, errors, 9, cheats)
-                        else:
-                            for row in model:
-                                if row[0] == f:
-                                    row[7] = complete
-                                    row[8] = errors
-                                    row[9] = cheats
-                                    modelHashes[f] = row.iter
-                                    break
-                    else:
-                        iter = model.append([f, '', '', '', hsize+1, vsize+1, squares, complete, errors, cheats, '', None, '', ''])
-                        modelHashes[f] = iter
-        
-        self.status_bar.set_right_label('Scanned %d crossword files' % len(modelHashes))
-        return model
+    def is_done(self):
+        return self.done
     
-    def filter_model(self, model):
-        def visible_func(model, iter, data=None):
-            #return not not model.get_value(iter, 10)
-            return True
-        
-        def modify_func(model, iter, column, data=None):
-            listmodel = model.get_model()
-            row = listmodel.get(model.convert_iter_to_child_iter(iter), 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
-            if column == 0:
-                if not row[10]:
-                    return 'red'
-                elif row[6] == row[7]:
-                    return 'green'
-                elif row[7] > 0:
-                    return 'blue'
-                else:
-                    return 'black'
-            if column == 1:
-                if row[11]:
-                    return row[11].date().isoformat()
-                else:
-                    return ''
-            elif column == 2:
-                if row[11]:
-                    return row[11].strftime('%a')
-                else:
-                    return ''
-            elif column == 3:
-                return row[12]
-            elif column == 4:
-                return row[13]
-            elif column == 5:
-                return row[2]
-            elif column == 6:
-                return str(row[4]) + 'x' + str(row[5])
-            elif column == 7:
-                return '%0.1f%%' % (100.0 * float(row[7]) / float(row[6]))
-            elif column == 8:
-                return row[8]
-            elif column == 9:
-                return row[9]
-        
-        modelFilter = model.filter_new()
-        modelFilter.set_visible_func(visible_func)
-        modelFilter.set_modify_func((str, str, str, str, str, str, str, str, int, int), modify_func)
-        return modelFilter
-
-    def sort_model(self, model):
-        dow = {'Mon': 0,
-               'Tue': 1,
-               'Wed': 2,
-               'Thu': 3,
-               'Fri': 4,
-               'Sat': 5,
-               'Sun': 6}
-        def sort_func(model, iter1, iter2, data):
-            item1 = model.get_value(iter1, data)
-            item2 = model.get_value(iter2, data)
-            if data == 2:
-                if item1 in dow:
-                    item1 = dow[item1]
-                if item2 in dow:
-                    item2 = dow[item2]
-            if item1 < item2: return -1
-            elif item2 < item1: return 1
-            else: return 0
-            
-        modelSort = gtk.TreeModelSort(model)
-        modelSort.set_sort_func(2, sort_func, 2)
-        modelSort.set_sort_column_id(1, gtk.SORT_DESCENDING)
-        return modelSort
-        
-    def create_list_view(self, model):
-        tree = gtk.TreeView(model)
+    def create_list_view(self, modelSort):
+        tree = gtk.TreeView(modelSort)
         tree.set_headers_clickable(True)
         tree.set_rules_hint(True)
         
         def addColumn(name, columnId):
             cell = gtk.CellRendererText()
-            column = gtk.TreeViewColumn(name, cell, text=columnId, foreground=0)
+            column = gtk.TreeViewColumn(name, cell, text=columnId, foreground=model.MODEL_COLOUR)
             column.set_sort_column_id(columnId)
             tree.append_column(column)
         
-        addColumn('Date', 1)
-        addColumn('Weekday', 2)
-        addColumn('Source', 3)
-        addColumn('Title', 4)
-        addColumn('Author', 5)
-        addColumn('Size', 6)
-        addColumn('Complete', 7)
-        addColumn('Errors', 8)
-        addColumn('Cheats', 9)
+        addColumn('Date', model.MODEL_DATE)
+        addColumn('Weekday', model.MODEL_DOW)
+        addColumn('Source', model.MODEL_SOURCE)
+        addColumn('Title', model.MODEL_TITLE)
+        addColumn('Author', model.MODEL_AUTHOR)
+        addColumn('Size', model.MODEL_SIZE)
+        addColumn('Complete', model.MODEL_COMPLETE)
+        addColumn('Errors', model.MODEL_ERRORS)
+        addColumn('Cheats', model.MODEL_CHEATS)
+        addColumn('Location', model.MODEL_LOCATION)
 
         tree.connect('row-activated', self.row_activated)
         
         return tree
         
+    def refresh_model(self):
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        def destroy(widget, data=None):
+            self.done = True
+        handler = window.connect('destroy', destroy)
+        
+        pbar = self.create_progress_bar(window)
+        
+        self.done = False
+        self.model.create_model(pbar.set_fraction, self.is_done)
+
+        if not self.done:
+            window.destroy()
+            modelSort = self.model.get_model()
+            modelSort.set_sort_column_id(model.MODEL_DATE, gtk.SORT_DESCENDING)
+            self.tree.set_model(modelSort)
+
     def row_activated(self, treeview, path, view_column, data=None):
-        modelSort = treeview.get_model()
-        iterSort = modelSort.get_iter(path)
-        modelFilter = modelSort.get_model()
-        iterFilter = modelSort.convert_iter_to_child_iter(None, iterSort)
-        model = modelFilter.get_model()
-        iter = modelFilter.convert_iter_to_child_iter(iterFilter)
-        location = model.get_value(iter, 10)
+        location = self.model.get_location(path)
         self.launch_puzzle(location)
 
     def launch_puzzle(self, location):
@@ -526,23 +340,6 @@ class OrganizerWindow:
     def get_puzzle_file(self, puzzle):
         dir = config_path('crossword_puzzles')
         return os.path.join(dir, puzzle.hashcode())
-
-    def load_puzzle(self, fname):
-        pp = None
-        try: f = file(fname, 'r')
-        except IOError: f = None
-
-        if f:
-            try:
-                pp = puzzle.PersistentPuzzle()
-                pp.from_binary(f.read())
-            except:
-                self.notify('The saved puzzle is corrupted. It will not be used: ' + fname)
-                #os.remove(fname)
-
-            f.close()
-            
-        return pp
 
     def exit(self):
         #self.write_config()
@@ -752,23 +549,6 @@ class OrganizerWindow:
         else:
             dlg.destroy()
     
-    def refresh_model(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        def destroy(widget, data=None):
-            self.done = True
-        handler = window.connect('destroy', destroy)
-        
-        pbar = self.create_progress_bar(window)
-        
-        self.done = False
-        model = self.create_model(self.puzzle_store, pbar.set_fraction)
-
-        if not self.done:
-            window.destroy()
-            modelFilter = self.filter_model(model)
-            modelSort = self.sort_model(modelFilter)
-            self.tree.set_model(modelSort)
-
     def page_setup(self):
         if has_print:
             pr = printing.PuzzlePrinter(self.puzzle)
