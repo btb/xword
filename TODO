@@ -9,7 +9,8 @@ Before Release
 
 # UI improvements: directories, filters, menus, toolbars
 
-# Use file date for unknown crossword date
+# Add setup.py for distutils
+
 
 Next Release
 ============

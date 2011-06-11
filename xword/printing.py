@@ -295,39 +295,11 @@ class PuzzlePrinter:
                      top + (y+1)*box_size)
                 self.draw_box(x, y, r)
 
-    def draw_clues(self, r, coltop, colbot):
-        (left, top, right, bottom) = r
-
-        maxw = right - left
-
-        if PuzzlePrinter.enlarged: size = 12
-        else: size = 10
-
-        while size > 5:
-            area = ClueArea(self.puzzle,
-                            self.context, size, MIN_SPACING,
-                            coltop, colbot)
-            w = area.width()
-            if w <= maxw: break
-            size -= 1
-
-        cols = area.num_columns()
-        spacing = MIN_SPACING
-        while spacing <= MAX_SPACING:
-            area = ClueArea(self.puzzle, self.context, size, spacing,
-                            coltop, colbot)
-            c = area.num_columns()
-            if c != cols: break
-            spacing += SPACING_INCR
-
-        spacing -= SPACING_INCR
-        area = ClueArea(self.puzzle, self.context, size, spacing,
-                        coltop, colbot)
-
-        area.draw(self.cr, left, top)
-
-    def draw_single_page(self):
-        context = self.context
+    def draw_page(self, op, context, page_nr):
+        self.context = context
+        self.cr = context.get_cairo_context()
+        self.cr.set_source_rgb(0, 0, 0)
+        self.cr.set_line_width(0.5)
 
         w = context.get_width()
         h = context.get_height()
@@ -339,75 +311,6 @@ class PuzzlePrinter:
         col_width = clue_area_width(context)
         num_cols = int(w / col_width)
         inner_width = col_width * num_cols
-        (left, right) = ((w - inner_width)/2, (w + inner_width)/2)
-
-        heights = [bottom-top]*num_cols
-        area = ClueLayout(self.puzzle, context, heights)
-        for col in range(area.num_columns()):
-            area.draw_column(col, self.cr, left + col*col_width, top)
-
-        return
-
-        if h > w:
-            size_w = (right - left) * 0.75
-            size_h = (bottom - top)/2
-        else:
-            size_w = (right - left)/2
-            size_h = (bottom - top) * 0.75
-
-        (pw, ph) = self.min_puzzle_size(size_w, size_h)
-        pw = int((pw + col_width - 1)/col_width) * col_width
-
-        if self.place == LEFT_TOP:
-            r = (left, top, left+pw, top+ph)
-            inside_top = top+ph
-            inside_bot = bottom
-        elif self.place == LEFT_BOT:
-            r = (left, bottom-ph, left+pw, bottom)
-            inside_top = top
-            inside_bot = bottom-ph
-        elif self.place == RIGHT_TOP:
-            r = (right-pw, top, right, top+ph)
-            inside_top = top+ph
-            inside_bot = bottom
-        elif self.place == RIGHT_BOT:
-            r = (right-pw, bottom-ph, right, bottom)
-            inside_top = top
-            inside_bot = bottom-ph
-        else:
-            assert False
-
-        def coltop(x0, x1):
-            if x1 < r[0] or x0 > r[2]: return top
-            else: return inside_top
-
-        def colbot(x0, x1):
-            if x1 < r[0] or x0 > r[2]: return bottom
-            else: return inside_bot
-
-        fullr = (left, top, right, bottom)
-        self.draw_clues(fullr, coltop, colbot)
-        self.draw_puzzle(r)
-
-    def draw_page(self, op, context, page_nr):
-        self.context = context
-        self.cr = context.get_cairo_context()
-        self.cr.set_source_rgb(0, 0, 0)
-        self.cr.set_line_width(0.5)
-
-        self.draw_single_page()
-        return
-
-        w = context.get_width()
-        h = context.get_height()
-        (left, top, right, bottom) = (0, 0, w, h)
-
-        self.cr.rectangle(0, 0, w, h)
-        self.cr.stroke()
-
-        col_width = clue_area_width(context)
-        nums_cols = int(w / col_width)
-        inner_width = col_width * nums_cols
         (left, right) = ((w - inner_width)/2, (w + inner_width)/2)
 
         if PuzzlePrinter.enlarged:
@@ -448,22 +351,32 @@ class PuzzlePrinter:
             assert False
 
         def coltop(x0, x1):
-            if x1 < r[0] or x0 > r[2]: return top
+            if x1 <= r[0] or x0 >= r[2]: return top
             else: return inside_top
 
         def colbot(x0, x1):
-            if x1 < r[0] or x0 > r[2]: return bottom
+            if x1 <= r[0] or x0 >= r[2]: return bottom
             else: return inside_bot
 
         if PuzzlePrinter.enlarged:
             if page_nr == 0:
                 self.draw_puzzle(r)
             else:
-                fullr = (left, top, right, bottom)
-                self.draw_clues(fullr, coltop, colbot)
+                heights = [bottom-top]*num_cols
+                area = ClueLayout(self.puzzle, context, heights)
+                for col in range(area.num_columns()):
+                    area.draw_column(col, self.cr, left + col*col_width, top)
         else:
-            fullr = (left, top, right, bottom)
-            self.draw_clues(fullr, coltop, colbot)
+            heights = []
+            for col in range(num_cols):
+                x0 = left + col*col_width
+                x1 = left + (col + 1)*col_width
+                heights.append(colbot(x0, x1) - coltop(x0, x1))
+            area = ClueLayout(self.puzzle, context, heights)
+            for col in range(area.num_columns()):
+                x0 = left + col*col_width
+                x1 = left + (col + 1)*col_width
+                area.draw_column(col, self.cr, left + col*col_width, coltop(x0, x1))
             self.draw_puzzle(r)
 
     def begin_print(self, op, context):
