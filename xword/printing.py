@@ -270,8 +270,8 @@ class PuzzlePrinter:
         w = box_size * puzzle.width
         h = box_size * puzzle.height
 
-        self.cr.rectangle(left, top, right-left, bottom-top)
-        self.cr.stroke()
+#        self.cr.rectangle(left, top, right-left, bottom-top)
+#        self.cr.stroke()
 
         banner_box = (left, top, right, top + self.banner_size)
         self.draw_banner(banner_box)
@@ -305,8 +305,8 @@ class PuzzlePrinter:
         h = context.get_height()
         (left, top, right, bottom) = (0, 0, w, h)
 
-        self.cr.rectangle(0, 0, w, h)
-        self.cr.stroke()
+#        self.cr.rectangle(0, 0, w, h)
+#        self.cr.stroke()
 
         col_width = clue_area_width(context)
         num_cols = int(w / col_width)
