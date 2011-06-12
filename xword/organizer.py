@@ -64,18 +64,6 @@ CONFIG_DIR = os.path.expanduser(os.path.join('~', '.xword'))
 def config_path(name):
     return CONFIG_DIR + '/' + name
 
-HOME_PATH = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
-
-stock_items = [
-    ('xw-check-word', 'pixmaps/crossword-check.png'),
-    ('xw-check-puzzle', 'pixmaps/crossword-check-all.png'),
-    ('xw-solve-word', 'pixmaps/crossword-solve.png'),
-    ('xw-clock', 'pixmaps/crossword-clock.png'),
-    ]
-
-ACROSS = puzzle.ACROSS
-DOWN = puzzle.DOWN
-
 ui_description = '''
 <ui>
   <menubar name="Menubar">
@@ -94,10 +82,6 @@ ui_description = '''
       <separator/>
       <menuitem action="Close"/>
       <menuitem action="Quit"/>
-    </menu>
-    <menu action="MenuEdit">
-      <menuitem action="ClearWord"/>
-      <menuitem action="ClearPuzzle"/>
     </menu>
     <menu action="MenuPreferences">
       <menuitem action="SkipFilled"/>
@@ -123,13 +107,6 @@ ui_description = '''
   </toolbar>
 </ui>
 '''
-
-def time_str(t):
-    total = int(t)
-    secs = total % 60
-    mins = (total / 60) % 60
-    hrs = (total / 3600)
-    return "%d:%02d:%02d" % (hrs, mins, secs)
 
 class StatusBar:
     def __init__(self):
@@ -220,7 +197,7 @@ class OrganizerWindow:
 
         mainbox.pack_start(self.status_bar.frame, False, False, 0)
 
-        self.enable_controls(False, False)
+        self.enable_controls(False)
 
         win.show_all()
         self.status_bar.set_status('Double-click a crossword to open it')
@@ -297,6 +274,7 @@ class OrganizerWindow:
         addColumn('Location', model.MODEL_LOCATION)
 
         tree.connect('row-activated', self.row_activated)
+        tree.connect('cursor-changed', self.cursor_changed)
         
         return tree
         
@@ -320,11 +298,17 @@ class OrganizerWindow:
     def row_activated(self, treeview, path, view_column, data=None):
         location = self.model.get_location(path)
         self.launch_puzzle(location)
+        
+    def cursor_changed(self, treeview, data=None):
+        selection = self.tree.get_selection()
+        (model, iter) = selection.get_selected()
+        if iter:
+            self.enable_controls(True)
 
     def launch_puzzle(self, location):
         p = subprocess.Popen([sys.argv[0], location])
         
-    def enable_controls(self, enabled, locked):
+    def enable_controls(self, enabled):
         def enable(a, x):
             action = self.actiongroup.get_action(a)
             action.set_sensitive(x)
@@ -406,20 +390,12 @@ class OrganizerWindow:
             action.set_property('label', title)
 
     def create_ui(self):
-        icons = gtk.IconFactory()
-        for (stock_id, filename) in stock_items:
-            path = os.path.join(HOME_PATH, filename)
-            pixbuf = gtk.gdk.pixbuf_new_from_file(path)
-            iconset = gtk.IconSet(pixbuf)
-            icons.add(stock_id, iconset)
-        icons.add_default()
-
         ui = gtk.UIManager()
         
         accelgroup = ui.get_accel_group()
         self.win.add_accel_group(accelgroup)
 
-        actiongroup = gtk.ActionGroup('XwordActions')
+        actiongroup = gtk.ActionGroup('XwordOrganizerActions')
         self.actiongroup = actiongroup
 
         def mk(action, stock_id, label=None, tooltip=None):
@@ -428,11 +404,11 @@ class OrganizerWindow:
 
         actiongroup.add_actions([
             mk('MenuFile', None, '_File'),
-            mk('Open', gtk.STOCK_OPEN),
-            mk('Refresh', gtk.STOCK_REFRESH),
+            mk('Open', gtk.STOCK_OPEN, tooltip='Open a puzzle file'),
+            mk('Refresh', gtk.STOCK_REFRESH, tooltip='Refresh the scanned crossword files'),
             mk('MenuRecent', None, 'Open recent'),
             mk('PageSetup', None, 'Page setup...'),
-            mk('Print', gtk.STOCK_PRINT),
+            mk('Print', gtk.STOCK_PRINT, tooltip='Print the selected puzzle'),
             mk('Close', gtk.STOCK_CLOSE),
             mk('Quit', gtk.STOCK_QUIT),
 
@@ -441,19 +417,6 @@ class OrganizerWindow:
             mk('Recent2', None, 'No recent item'),
             mk('Recent3', None, 'No recent item'),
             mk('Recent4', None, 'No recent item'),
-
-            mk('MenuEdit', None, 'Edit'),
-            mk('ClearWord', None, 'Clear word'),
-            mk('ClearPuzzle', None, 'Clear puzzle'),
-
-            mk('MenuHints', None, 'Hints'),
-            mk('CheckLetter', None, 'Check letter'),
-            mk('CheckWord', 'xw-check-word', 'Check word', 'Check word'),
-            mk('CheckPuzzle', 'xw-check-puzzle', 'Check puzzle',
-               'Check puzzle'),
-            mk('SolveLetter', None, 'Solve letter'),
-            mk('SolveWord', 'xw-solve-word', 'Solve word', 'Solve word'),
-            mk('SolvePuzzle', None, 'Solve puzzle'),
 
             mk('MenuPreferences', None, 'Preferences'),
             mk('MenuLayout', None, 'Layout'),
@@ -466,7 +429,6 @@ class OrganizerWindow:
             mk('Lay6', None, ''),
 
             mk('MenuHelp', None, '_Help'),
-            mk('Shortcuts', None, 'Keyboard shortcuts'),
             mk('About', None, 'About'),
             ])
 
@@ -508,29 +470,9 @@ class OrganizerWindow:
             self.page_setup()
         elif name == 'About':
             self.show_about()
-        elif name == 'AboutPuzzle':
-            self.show_about_puzzle()
-        elif name == 'Shortcuts':
-            self.show_keyboard_shortcuts()
         elif name.startswith('Recent'):
             index = int(name[len('Recent'):])
             self.open_recent(index)
-        elif name == 'CheckLetter':
-            self.control.check_letter()
-        elif name == 'CheckWord':
-            self.control.check_word()
-        elif name == 'CheckPuzzle':
-            self.control.check_puzzle()
-        elif name == 'SolveLetter':
-            self.control.solve_letter()
-        elif name == 'SolveWord':
-            self.control.solve_word()
-        elif name == 'SolvePuzzle':
-            self.control.solve_puzzle()
-        elif name == 'ClearWord':
-            self.control.clear_word()
-        elif name == 'ClearPuzzle':
-            self.control.clear_puzzle()
 
     def open_file(self):
         dlg = gtk.FileChooserDialog("Open...",
@@ -551,14 +493,22 @@ class OrganizerWindow:
     
     def page_setup(self):
         if has_print:
-            pr = printing.PuzzlePrinter(self.puzzle)
+            selection = self.tree.get_selection()
+            (model, iter) = selection.get_selected()
+            location = self.model.get_location_iter(iter)
+            puz = puzzle.Puzzle(location)
+            pr = printing.PuzzlePrinter(puz)
             pr.do_page_setup(self.win)
         else:
             self.notify('Printing support is not available (need GTK 2.10+).')
 
     def print_puzzle(self):
         if has_print:
-            pr = printing.PuzzlePrinter(self.puzzle)
+            selection = self.tree.get_selection()
+            (model, iter) = selection.get_selected()
+            location = self.model.get_location_iter(iter)
+            puz = puzzle.Puzzle(location)
+            pr = printing.PuzzlePrinter(puz)
             pr.print_puzzle(self.win)
         else:
             self.notify('Printing support is not available (need GTK 2.10+).')

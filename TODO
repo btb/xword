@@ -7,13 +7,15 @@ Before Release
 # Possible problem: Open puzzle in locked mode, reopen in unlocked, close,
 #   then when you run xword it opens back in locked
 
-# UI improvements: directories, filters, menus, toolbars
+# UI improvements: add directories
 
 # Add setup.py for distutils
 
 
 Next Release
 ============
+
+# Use filters to limit the displayed puzzles in the organizer
 
 # Use IPC to manage multiple instances
 

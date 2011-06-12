@@ -69,6 +69,8 @@ import os, os.path
 import pickle
 import ConfigParser
 import tempfile
+import subprocess
+import wnck
 
 CONFIG_DIR = os.path.expanduser(os.path.join('~', '.xword'))
 def config_path(name):
@@ -108,6 +110,7 @@ ui_description = '''
         <menuitem action="Recent3"/>
         <menuitem action="Recent4"/>
       </menu>
+      <menuitem action="PuzzleOrganizer"/>
       <menuitem action="Save"/>
       <menuitem action="AboutPuzzle"/>
       <separator/>
@@ -151,6 +154,7 @@ ui_description = '''
   <toolbar name="Toolbar">
     <toolitem action="AboutPuzzle"/>
     <toolitem action="Open"/>
+    <toolitem action="PuzzleOrganizer"/>
     <toolitem action="Save"/>
     <toolitem action="Print"/>
     <separator/>
@@ -683,12 +687,13 @@ class MainWindow:
 
         actiongroup.add_actions([
             mk('MenuFile', None, '_File'),
-            mk('Open', gtk.STOCK_OPEN),
+            mk('Open', gtk.STOCK_OPEN, tooltip='Open another puzzle'),
             mk('MenuRecent', None, 'Open recent'),
-            mk('Save', gtk.STOCK_SAVE),
-            mk('AboutPuzzle', gtk.STOCK_INFO, 'About puzzle'),
+            mk('Save', gtk.STOCK_SAVE, tooltip='Save this puzzle'),
+            mk('PuzzleOrganizer', gtk.STOCK_DIRECTORY, 'Puzzle Organizer', 'Open the Xword Puzzle Organizer'),
+            mk('AboutPuzzle', gtk.STOCK_INFO, 'About puzzle', 'About this puzzle'),
             mk('PageSetup', None, 'Page setup...'),
-            mk('Print', gtk.STOCK_PRINT),
+            mk('Print', gtk.STOCK_PRINT, tooltip='Print this puzzle'),
             mk('Close', gtk.STOCK_CLOSE),
             mk('Quit', gtk.STOCK_QUIT),
 
@@ -704,11 +709,11 @@ class MainWindow:
 
             mk('MenuHints', None, 'Hints'),
             mk('CheckLetter', None, 'Check letter'),
-            mk('CheckWord', 'xw-check-word', 'Check word', 'Check word'),
+            mk('CheckWord', 'xw-check-word', 'Check word', 'Check the current word'),
             mk('CheckPuzzle', 'xw-check-puzzle', 'Check puzzle',
-               'Check puzzle'),
+               'Check the entire puzzle'),
             mk('SolveLetter', None, 'Solve letter'),
-            mk('SolveWord', 'xw-solve-word', 'Solve word', 'Solve word'),
+            mk('SolveWord', 'xw-solve-word', 'Solve word', 'Solve the current word'),
             mk('SolvePuzzle', None, 'Solve puzzle'),
 
             mk('MenuPreferences', None, 'Preferences'),
@@ -726,16 +731,16 @@ class MainWindow:
             mk('About', None, 'About'),
             ])
 
-        def mktog(action, stock_id, label, active):
+        def mktog(action, stock_id, label, active, tooltip=None):
             return (action, stock_id, label,
-                    None, None, self.action_callback, active)
+                    None, tooltip, self.action_callback, active)
 
         actiongroup.add_toggle_actions([
             mktog('SkipFilled', None, 'Skip filled squares', self.skip_filled),
             mktog('StartTimer', None,
                   'Start timer automatically', self.start_timer),
 
-            mktog('Clock', 'xw-clock', 'Clock', self.clock_running),
+            mktog('Clock', 'xw-clock', 'Clock', self.clock_running, 'Start/Stop the clock running'),
             ])            
 
         ui.insert_action_group(actiongroup, 0)
@@ -749,6 +754,7 @@ class MainWindow:
 
         self.menubar = ui.get_widget('/Menubar')
         self.toolbar = ui.get_widget('/Toolbar')
+        self.toolbar.set_style(gtk.TOOLBAR_BOTH_HORIZ)
 
     def select_layout(self, index):
         if index <> self.layout: self.set_layout(index)
@@ -767,6 +773,8 @@ class MainWindow:
             self.open_file()
         elif name == 'Save':
             self.save_file()
+        elif name == 'PuzzleOrganizer':
+            self.open_organizer()
         elif name == 'Print':
             self.print_puzzle()
         elif name == 'PageSetup':
@@ -982,6 +990,22 @@ class MainWindow:
         if response == gtk.RESPONSE_OK:
             self.do_save_file(save_dlg.get_filename())
         dlg.destroy()
+
+    def open_organizer(self):
+        screen = wnck.screen_get_default()
+
+        while gtk.events_pending():
+            gtk.main_iteration()
+
+        found = False
+        for window in screen.get_windows():
+            # select a window depending on WindowID, title, icon etc
+            if window.get_name().startswith('Xword Organizer'):
+                found = True
+                window.activate(gtk.get_current_event_time())
+        
+        if not found:
+            p = subprocess.Popen([sys.argv[0]])
 
     def page_setup(self):
         if has_print:

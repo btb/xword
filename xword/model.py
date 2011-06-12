@@ -350,10 +350,15 @@ class Model:
         if not self.outer_model:
             return None
         iterSort = self.outer_model.get_iter(path)
+        return self.get_location_iter(iterSort)
+
+    def get_location_iter(self, iterSort):
+        if not self.outer_model:
+            return None
         modelFilter = self.outer_model.get_model()
         iterFilter = self.outer_model.convert_iter_to_child_iter(None, iterSort)
         iter = modelFilter.convert_iter_to_child_iter(iterFilter)
-        location = self.model.get_value(iter, 10)
+        location = self.model.get_value(iter, INNER_LOCATION)
         return location
 
     def load_puzzle(self, fname):
