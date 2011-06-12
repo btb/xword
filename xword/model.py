@@ -8,6 +8,14 @@ import gobject
 import os.path
 import datetime
 
+DOW_SORT_ORDER = {'Mon': 0,
+                  'Tue': 1,
+                  'Wed': 2,
+                  'Thu': 3,
+                  'Fri': 4,
+                  'Sat': 5,
+                  'Sun': 6}
+
 INNER_COLUMNS = 14
 
 INNER_HASHCODE = 0
@@ -308,27 +316,26 @@ class Model:
         return modelFilter
 
     def sort_model(self, model):
-        dow = {'Mon': 0,
-               'Tue': 1,
-               'Wed': 2,
-               'Thu': 3,
-               'Fri': 4,
-               'Sat': 5,
-               'Sun': 6}
-        def sort_func(model, iter1, iter2, data):
-            item1 = model.get_value(iter1, data)
-            item2 = model.get_value(iter2, data)
-            if data == MODEL_DOW:
-                if item1 in dow:
-                    item1 = dow[item1]
-                if item2 in dow:
-                    item2 = dow[item2]
+        def sort_func(model, iter1, iter2, column):
+            item1 = model.get_value(iter1, column)
+            item2 = model.get_value(iter2, column)
+            if column == MODEL_DOW:
+                if item1 in DOW_SORT_ORDER:
+                    item1 = DOW_SORT_ORDER[item1]
+                if item2 in DOW_SORT_ORDER:
+                    item2 = DOW_SORT_ORDER[item2]
+            elif column == MODEL_COMPLETE:
+                if item1.endswith('%'):
+                    item1 = float(item1[:(len(item1)-1)])
+                if item2.endswith('%'):
+                    item2 = float(item2[:(len(item2)-1)])
             if item1 < item2: return -1
             elif item2 < item1: return 1
             else: return 0
             
         modelSort = gtk.TreeModelSort(model)
         modelSort.set_sort_func(MODEL_DOW, sort_func, MODEL_DOW)
+        modelSort.set_sort_func(MODEL_COMPLETE, sort_func, MODEL_COMPLETE)
         return modelSort
     
     def get_model(self):
