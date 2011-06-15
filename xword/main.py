@@ -1,53 +1,8 @@
-#!/usr/bin/python
-
-__version__ = '2.0'
-
-__license__ = '''
-Copyright (c) 2005-2009,
-  Bill McCloskey    <bill.mccloskey@gmail.com>
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-3. The names of the contributors may not be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-'''
-
-# TODO:
-# Verify puzzle checksums
-# Fix printing (Windows bug, Linux bug, enlarge support)
-# Test fresh install, install over old version
-# Make sure keyboard shortcuts (including arrows & delete key) match AL
-# Package everything into one script file
-# Create Windows installer
-# Possible problem: Open puzzle in locked mode, reopen in unlocked, close,
-#   then when you run xword it opens back in locked
-
 import puzzle
 import controller
 import grid
 import printing
+import config
 
 import pygtk
 pygtk.require('2.0')
@@ -63,18 +18,10 @@ except:
     has_print = False
 
 import sys
-import math
 import time
-import os, os.path
-import pickle
-import ConfigParser
-import tempfile
+import os.path
 import subprocess
 import wnck
-
-CONFIG_DIR = os.path.expanduser(os.path.join('~', '.xword'))
-def config_path(name):
-    return CONFIG_DIR + '/' + name
 
 HOME_PATH = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 
@@ -83,16 +30,6 @@ stock_items = [
     ('xw-check-puzzle', 'pixmaps/crossword-check-all.png'),
     ('xw-solve-word', 'pixmaps/crossword-solve.png'),
     ('xw-clock', 'pixmaps/crossword-clock.png'),
-    ]
-
-layouts = [
-    ('Only Puzzle', 'puzzle'),
-    ('Right Side', ('H', 'puzzle', 550, ('V', 'across', 250, 'down'))),
-    ('Left Side', ('H', ('V', 'across', 250, 'down'), 200, 'puzzle')),
-    ('Left and Right', ('H', ('H', 'across', 175, 'puzzle'), 725, 'down')),
-    ('Top', ('V', ('H', 'across', 450, 'down'), 200, 'puzzle')),
-    ('Bottom', ('V', 'puzzle', 400, ('H', 'across', 450, 'down'))),
-    ('Top and Bottom', ('V', 'across', 150, ('V', 'puzzle', 300, 'down')))
     ]
 
 ACROSS = puzzle.ACROSS
@@ -240,18 +177,8 @@ class StatusBar:
         self.right_label.set_text(label)
 
 class MainWindow:
-    def __init__(self, fname=None):
-        self.setup_config_dir()
-        store = puzzle.PuzzleStore(config_path('crossword-recent'),
-                                   config_path('crossword-recent-list'))
-        self.puzzle_store = store
-
-        recent = self.puzzle_store.recent_list()
-        if fname == None and len(recent) >= 1:
-            fname = self.puzzle_store.get_recent(recent[0][1])
-            ask = False
-        else:
-            ask = True
+    def __init__(self, fname):
+        self.config = config.XwordConfig()
 
         self.clock_time = 0.0
         self.clock_running = False
@@ -259,13 +186,10 @@ class MainWindow:
         self.puzzle = None
         self.control = controller.DummyController()
 
-        self.skip_filled = False
-        self.start_timer = False
-        self.layout = 0
-        self.window_size = (900, 600)
-        self.maximized = False
-        self.positions = layouts[self.layout][1]
-        self.default_loc = None
+        self.skip_filled = self.config.get_skip_filled()
+        self.start_timer = self.config.get_start_timer()
+        self.layout = self.config.get_layout()
+        self.maximized = self.config.get_maximized()
 
         win = gtk.Window()
         self.win = win
@@ -273,9 +197,8 @@ class MainWindow:
         win.connect('size-allocate', self.resize_window)
         win.connect('window-state-event', self.state_event)
 
-        self.read_config()
-
-        win.resize(self.window_size[0], self.window_size[1])
+        window_size = self.config.get_window_size()
+        win.resize(window_size[0], window_size[1])
         if self.maximized: win.maximize()
         
         vbox = gtk.VBox()
@@ -296,7 +219,7 @@ class MainWindow:
         self.vbox = gtk.VBox()
         vbox.pack_start(self.vbox, True, True, 0)
 
-        self.cur_layout = self.generate_layout(self.positions)
+        self.cur_layout = self.generate_layout(self.config.get_positions())
         self.vbox.pack_start(self.cur_layout, True, True, 0)
 
         self.status_bar = StatusBar()
@@ -309,7 +232,7 @@ class MainWindow:
 
         win.show_all()
 
-        if fname: self.do_open_file(fname, ask)
+        if fname: self.do_open_file(fname)
 
         self.control.signal()
         self.puzzle_widget.area.grab_focus()
@@ -357,8 +280,8 @@ class MainWindow:
         self.control.connect('check-result', self.check_result)
 
     def open_recent(self, index):
-        (title, hashcode) = self.puzzle_store.recent_list()[index]
-        fname = self.puzzle_store.get_recent(hashcode)
+        (title, hashcode) = self.config.recent_list()[index]
+        fname = self.config.get_recent(hashcode)
         self.do_open_file(fname)
 
     def do_open_file(self, fname, ask=True):
@@ -377,19 +300,15 @@ class MainWindow:
         self.load_list(DOWN)
         self.enable_controls(True, self.puzzle.is_locked())
 
-        self.puzzle_store.add_recent(self.puzzle)
+        self.config.add_recent(self.puzzle)
         self.update_recent_menu()
 
         self.idle_event()
         self.letter_update(0, 0)
 
     def do_save_file(self, fname):
-        self.default_loc = os.path.dirname(fname)
+        self.config.set_default_loc(os.path.dirname(fname))
         self.puzzle.save(fname)
-
-    def get_puzzle_file(self, puzzle):
-        dir = config_path('crossword_puzzles')
-        return os.path.join(dir, puzzle.hashcode())
 
     def load_puzzle(self, fname, f):
         pp = puzzle.PersistentPuzzle()
@@ -415,7 +334,7 @@ class MainWindow:
 
         self.show_title()
 
-        fname = self.get_puzzle_file(puzzle)
+        fname = self.config.get_puzzle_file(puzzle)
 
         try: f = file(fname, 'r')
         except IOError: f = None
@@ -448,7 +367,7 @@ class MainWindow:
         if not self.puzzle: return
 
         if self.puzzle.is_empty():
-            fname = self.get_puzzle_file(self.puzzle)
+            fname = self.config.get_puzzle_file(self.puzzle)
             try: os.remove(fname)
             except: pass
         else:
@@ -461,15 +380,14 @@ class MainWindow:
             pp.clock = self.clock_time
             pp.clock_running = self.clock_running
 
-            fname = self.get_puzzle_file(self.puzzle)
+            fname = self.config.get_puzzle_file(self.puzzle)
             f = file(fname, 'w+')
             f.write(pp.to_binary())
             f.close()
 
     def exit(self):
+        self.config.set_positions(self.get_layout(self.cur_layout))
         self.write_puzzle()
-        self.write_config()
-        self.puzzle_store.write()
         gobject.source_remove(self.timeout)
         self.win.destroy()
         gtk.main_quit()
@@ -611,9 +529,12 @@ class MainWindow:
         
         self.cur_layout = None
         self.layout = index
-        self.positions = layouts[index][1]
-        self.cur_layout = self.generate_layout(self.positions)
+        self.config.set_layout(index)
+        positions = config.LAYOUTS[index][1]
+        self.cur_layout = self.generate_layout(positions)
         self.vbox.pack_start(self.cur_layout, True, True, 0)
+        
+        self.config.set_positions(self.get_layout(self.cur_layout))
 
         self.win.show_all()
         self.puzzle_widget.area.grab_focus()
@@ -638,14 +559,17 @@ class MainWindow:
 
     def state_event(self, w, event):
         state = int(event.new_window_state)
-        self.maximized = (state & gtk.gdk.WINDOW_STATE_MAXIMIZED) <> 0
+        maximized = (state & gtk.gdk.WINDOW_STATE_MAXIMIZED) <> 0
+        if (self.maximized != maximized):
+            self.maximized = maximized
+            self.config.set_maximized(maximized) 
 
     def resize_window(self, widget, allocation):
         if not self.maximized:
-            self.window_size = self.win.get_size()
+            self.config.set_window_size(self.win.get_size())
 
     def update_recent_menu(self):
-        recent = self.puzzle_store.recent_list()
+        recent = self.config.recent_list()
         for (i, (title, hashcode)) in enumerate(recent):
             action = self.actiongroup.get_action('Recent%d' % i)
             action.set_sensitive(True)
@@ -736,7 +660,7 @@ class MainWindow:
                     None, tooltip, self.action_callback, active)
 
         actiongroup.add_toggle_actions([
-            mktog('SkipFilled', None, 'Skip filled squares', self.skip_filled),
+            mktog('SkipFilled', None, 'Skip filled squares', self.config.get_skip_filled()),
             mktog('StartTimer', None,
                   'Start timer automatically', self.start_timer),
 
@@ -748,7 +672,7 @@ class MainWindow:
 
         self.update_recent_menu()
 
-        for (i, layout) in enumerate(layouts):
+        for (i, layout) in enumerate(config.LAYOUTS):
             action = self.actiongroup.get_action('Lay%d' % i)
             action.set_property('label', layout[0])
 
@@ -766,7 +690,7 @@ class MainWindow:
         elif name == 'Close':
             self.exit()
         elif name == 'SkipFilled':
-            self.skip_filled = not self.skip_filled
+            self.config.set_skip_filled(not self.config.get_skip_filled())
         elif name == 'StartTimer':
             self.start_timer = not self.start_timer
         elif name == 'Open':
@@ -967,7 +891,8 @@ class MainWindow:
                                     (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                      gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         dlg.set_default_response(gtk.RESPONSE_OK)
-        if self.default_loc: dlg.set_current_folder(self.default_loc)
+        default_loc = self.config.get_default_loc()
+        if default_loc: dlg.set_current_folder(default_loc)
 
         response = dlg.run()
         if response == gtk.RESPONSE_OK:
@@ -984,7 +909,8 @@ class MainWindow:
                                     (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                      gtk.STOCK_SAVE, gtk.RESPONSE_OK))
         dlg.set_default_response(gtk.RESPONSE_OK)
-        if self.default_loc: dlg.set_current_folder(self.default_loc)
+        default_loc = self.config.get_default_loc()
+        if default_loc: dlg.set_current_folder(default_loc)
 
         response = dlg.run()
         if response == gtk.RESPONSE_OK:
@@ -1020,56 +946,6 @@ class MainWindow:
             pr.print_puzzle(self.win)
         else:
             self.notify('Printing support is not available (need GTK 2.10+).')
-
-    def read_config(self):
-        c = ConfigParser.ConfigParser()
-        c.read(config_path('crossword.cfg'))
-        if c.has_section('options'):
-            if c.has_option('options', 'skip_filled'):
-                self.skip_filled = c.getboolean('options', 'skip_filled')
-            if c.has_option('options', 'start_timer'):
-                self.start_timer = c.getboolean('options', 'start_timer')
-            if c.has_option('options', 'layout'):
-                self.layout = c.getint('options', 'layout')
-            if c.has_option('options', 'positions'):
-                self.positions = eval(c.get('options', 'positions'))
-            if c.has_option('options', 'window_size'):
-                self.window_size = eval(c.get('options', 'window_size'))
-            if c.has_option('options', 'maximized'):
-                self.maximized = eval(c.get('options', 'maximized'))
-            if c.has_option('options', 'default_loc'):
-                self.default_loc = eval(c.get('options', 'default_loc'))
-
-    def write_config(self):
-        c = ConfigParser.ConfigParser()
-        c.add_section('options')
-        c.set('options', 'skip_filled', self.skip_filled)
-        c.set('options', 'start_timer', self.start_timer)
-        c.set('options', 'layout', self.layout)
-        c.set('options', 'positions', repr(self.get_layout(self.cur_layout)))
-        c.set('options', 'window_size', repr(self.window_size))
-        c.set('options', 'maximized', repr(self.maximized))
-        c.set('options', 'default_loc', repr(self.default_loc))
-        c.write(file(config_path('crossword.cfg'), 'w'))
-
-    def setup_config_dir(self):
-        if not os.path.exists(CONFIG_DIR):
-            def try_copy(fname):
-                path1 = os.path.expanduser(os.path.join('~', '.' + fname))
-                if os.path.exists(path1):
-                    path2 = config_path(fname)
-                    try: os.system('cp -r %s %s' % (path1, path2))
-                    except: pass
-
-            def try_make(fname):
-                try: os.mkdir(config_path(fname))
-                except OSError: pass
-
-            os.mkdir(CONFIG_DIR)
-            try_copy('crossword_puzzles')
-            try_make('crossword_puzzles')
-            try_copy('crossword.cfg')
-            try_make('crossword-recent')
 
 if __name__ == '__main__':
     if len(sys.argv) <> 2: fname = None

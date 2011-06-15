@@ -8,8 +8,6 @@ CHEAT = 3
 ACROSS = 0
 DOWN = 1
 
-MAX_RECENT = 5
-
 def make_hash(data):
     try:
         from hashlib import md5
@@ -425,60 +423,3 @@ class Puzzle:
 
     def get_cells(self):
         return self.responses.keys()
-
-class PuzzleStore:
-    PHASH = 0
-    PTITLE = 1
-
-    def __init__(self, recent_dir, recent_file):
-        self.recent_dir = recent_dir
-        self.recent_file = recent_file
-
-        try: data = eval(file(self.recent_file).read())
-        except: data = []
-
-        if type(data) == type([]):
-            for x in data:
-                if type(x) != type(()): data = []
-                if len(x) != 2: data = []
-        else:
-            data = []
-
-        self.recent = data
-
-    # Returns a (title, hashcode) list
-    def recent_list(self):
-        return [ (d[self.PTITLE], d[self.PHASH]) for d in self.recent ]
-
-    def remove_recent(self, hash):
-        self.recent = [ d for d in self.recent if d[self.PHASH] != hash ]
-        try: os.remove(os.path.join(self.recent_dir, hash))
-        except: pass
-
-    def add_recent(self, puzzle):
-        hashcode = puzzle.hashcode()
-        i = 0
-        for d in self.recent:
-            if d[self.PHASH] == hashcode:
-                self.recent.pop(i)
-                self.recent = [d] + self.recent
-                return
-            i += 1
-
-        if len(self.recent) >= MAX_RECENT:
-            rmv = self.recent.pop()
-            self.remove_recent(rmv[self.PHASH])
-
-        d = (hashcode, puzzle.title)
-        self.recent = [d] + self.recent
-        puzzle.save(os.path.join(self.recent_dir, hashcode))
-
-    def get_recent(self, hashcode):
-        for d in self.recent:
-            if d[self.PHASH] == hashcode:
-                return os.path.join(self.recent_dir, hashcode)
-
-    def write(self):
-        f = file(self.recent_file, 'w')
-        f.write(repr(self.recent))
-        f.close()

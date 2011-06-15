@@ -1,4 +1,5 @@
 import puzzle
+import config
 
 import pygtk
 pygtk.require('2.0')
@@ -124,9 +125,8 @@ def analyze_Thinks_puzzle(p, f):
     return (date, title)
 
 class Model:
-    def __init__(self, store, saved_puzzle_dir):
-        self.store = store
-        self.saved_puzzle_dir = saved_puzzle_dir
+    def __init__(self, config):
+        self.config = config
         self.model = None
         self.outer_model = None
 
@@ -141,7 +141,7 @@ class Model:
         
         dir = 'puzzles'
         
-        scanTotal = float(len(os.listdir(dir)) + len(self.store.recent_list()) + len(os.listdir(self.saved_puzzle_dir)))
+        scanTotal = float(len(os.listdir(dir)) + len(self.config.recent_list()) + len(os.listdir(config.CONFIG_PUZZLE_DIR)))
         scanned = 0
         
         for f in os.listdir(dir):
@@ -187,7 +187,7 @@ class Model:
                               INNER_DATE, date, INNER_SOURCE, source, INNER_TITLE2, title)
                     modelHashes[hashcode] = iter
         
-        for (title, hash) in self.store.recent_list():
+        for (title, hash) in self.config.recent_list():
             scanned += 1
             update_func(float(scanned) / scanTotal)
             while gtk.events_pending():
@@ -195,7 +195,7 @@ class Model:
             if done_func():
                 return
             
-            fname = self.store.get_recent(hash)
+            fname = self.config.get_recent(hash)
             if fname and os.path.exists(fname):
                 p = puzzle.Puzzle(fname)
                 hashcode = p.hashcode()
@@ -210,7 +210,7 @@ class Model:
                               INNER_LOCATION, fname, INNER_DATE, date, INNER_SOURCE, source, INNER_TITLE2, title)
                     modelHashes[hashcode] = iter
         
-        for f in os.listdir(self.saved_puzzle_dir):
+        for f in os.listdir(config.CONFIG_PUZZLE_DIR):
             scanned += 1
             update_func(float(scanned) / scanTotal)
             while gtk.events_pending():
@@ -218,7 +218,7 @@ class Model:
             if done_func():
                 return
                 
-            fname = os.path.join(self.saved_puzzle_dir, f)
+            fname = os.path.join(config.CONFIG_PUZZLE_DIR, f)
             if os.path.isfile(fname):
                 pp = self.load_puzzle(fname)
                 if pp:

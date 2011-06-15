@@ -1,42 +1,7 @@
-#!/usr/bin/python
-
-__version__ = '2.0'
-
-__license__ = '''
-Copyright (c) 2005-2009,
-  Bill McCloskey    <bill.mccloskey@gmail.com>
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-3. The names of the contributors may not be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-'''
-
 import puzzle
 import printing
 import model
+import config
 
 import pygtk
 pygtk.require('2.0')
@@ -52,17 +17,7 @@ except:
     has_print = False
 
 import sys
-import math
-import time
-import os, os.path
-import pickle
-import ConfigParser
-import tempfile
 import subprocess
-
-CONFIG_DIR = os.path.expanduser(os.path.join('~', '.xword'))
-def config_path(name):
-    return CONFIG_DIR + '/' + name
 
 ui_description = '''
 <ui>
@@ -84,17 +39,6 @@ ui_description = '''
       <menuitem action="Quit"/>
     </menu>
     <menu action="MenuPreferences">
-      <menuitem action="SkipFilled"/>
-      <menuitem action="StartTimer"/>
-      <menu action="MenuLayout">
-        <menuitem action="Lay0"/>
-        <menuitem action="Lay1"/>
-        <menuitem action="Lay2"/>
-        <menuitem action="Lay3"/>
-        <menuitem action="Lay4"/>
-        <menuitem action="Lay5"/>
-        <menuitem action="Lay6"/>
-      </menu>
     </menu>
     <menu action="MenuHelp">
       <menuitem action="About"/>
@@ -129,14 +73,11 @@ class StatusBar:
 
 class OrganizerWindow:
     def __init__(self):
-        self.setup_config_dir()
         self.done = False
         gobject.idle_add(self.init)
         
     def init(self):
-        store = puzzle.PuzzleStore(config_path('crossword-recent'),
-                                   config_path('crossword-recent-list'))
-        self.puzzle_store = store
+        self.config = config.XwordConfig()
         self.status_bar = StatusBar()
         
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -148,7 +89,7 @@ class OrganizerWindow:
         
         pbar = self.create_progress_bar(window)
         
-        self.model = model.Model(store, config_path('crossword_puzzles'))
+        self.model = model.Model(self.config)
         self.model.create_model(pbar.set_fraction, self.is_done)
 
         if self.done:
@@ -157,24 +98,17 @@ class OrganizerWindow:
         self.win.handler_disconnect(handler)
         self.win.destroy()
         
-        self.skip_filled = False
-        self.start_timer = False
-        self.layout = 0
-        self.window_size = (900, 600)
-        self.maximized = False
-        self.positions = 'puzzle'
-        self.default_loc = None
-
+        self.organizer_maximized = self.config.get_organizer_maximized()
+        
         win = gtk.Window()
         self.win = win
-        self.handler = win.connect('destroy', lambda w: self.exit())
+        self.handler = win.connect('destroy', destroy)
         win.connect('size-allocate', self.resize_window)
         win.connect('window-state-event', self.state_event)
 
-        self.read_config()
-
-        win.resize(self.window_size[0], self.window_size[1])
-        if self.maximized: win.maximize()
+        organizer_window_size = self.config.get_organizer_window_size()
+        win.resize(organizer_window_size[0], organizer_window_size[1])
+        if self.organizer_maximized: win.maximize()
         
         mainbox = gtk.VBox()
         win.add(mainbox)
@@ -317,16 +251,11 @@ class OrganizerWindow:
         enable('Print', enabled)
 
     def open_recent(self, index):
-        (title, hashcode) = self.puzzle_store.recent_list()[index]
-        fname = self.puzzle_store.get_recent(hashcode)
+        (title, hashcode) = self.config.recent_list()[index]
+        fname = self.config.get_recent(hashcode)
         self.launch_puzzle(fname)
 
-    def get_puzzle_file(self, puzzle):
-        dir = config_path('crossword_puzzles')
-        return os.path.join(dir, puzzle.hashcode())
-
     def exit(self):
-        #self.write_config()
         self.win.destroy()
         gtk.main_quit()
 
@@ -376,14 +305,17 @@ class OrganizerWindow:
 
     def state_event(self, w, event):
         state = int(event.new_window_state)
-        self.maximized = (state & gtk.gdk.WINDOW_STATE_MAXIMIZED) <> 0
+        organizer_maximized = (state & gtk.gdk.WINDOW_STATE_MAXIMIZED) <> 0
+        if (self.organizer_maximized != organizer_maximized):
+            self.organizer_maximized = organizer_maximized
+            self.config.set_organizer_maximized(organizer_maximized) 
 
     def resize_window(self, widget, allocation):
-        if not self.maximized:
-            self.window_size = self.win.get_size()
+        if not self.organizer_maximized:
+            self.config.set_organizer_window_size(self.win.get_size())
 
     def update_recent_menu(self):
-        recent = self.puzzle_store.recent_list()
+        recent = self.config.recent_list()
         for (i, (title, hashcode)) in enumerate(recent):
             action = self.actiongroup.get_action('Recent%d' % i)
             action.set_sensitive(True)
@@ -419,14 +351,6 @@ class OrganizerWindow:
             mk('Recent4', None, 'No recent item'),
 
             mk('MenuPreferences', None, 'Preferences'),
-            mk('MenuLayout', None, 'Layout'),
-            mk('Lay0', None, ''),
-            mk('Lay1', None, ''),
-            mk('Lay2', None, ''),
-            mk('Lay3', None, ''),
-            mk('Lay4', None, ''),
-            mk('Lay5', None, ''),
-            mk('Lay6', None, ''),
 
             mk('MenuHelp', None, '_Help'),
             mk('About', None, 'About'),
@@ -435,12 +359,6 @@ class OrganizerWindow:
         def mktog(action, stock_id, label, active):
             return (action, stock_id, label,
                     None, None, self.action_callback, active)
-
-        actiongroup.add_toggle_actions([
-            mktog('SkipFilled', None, 'Skip filled squares', self.skip_filled),
-            mktog('StartTimer', None,
-                  'Start timer automatically', self.start_timer)
-            ])            
 
         ui.insert_action_group(actiongroup, 0)
         ui.add_ui_from_string(ui_description)
@@ -456,10 +374,6 @@ class OrganizerWindow:
             self.exit()
         elif name == 'Close':
             self.exit()
-        elif name == 'SkipFilled':
-            self.skip_filled = not self.skip_filled
-        elif name == 'StartTimer':
-            self.start_timer = not self.start_timer
         elif name == 'Open':
             self.open_file()
         elif name == 'Refresh':
@@ -481,7 +395,8 @@ class OrganizerWindow:
                                     (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                      gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         dlg.set_default_response(gtk.RESPONSE_OK)
-        if self.default_loc: dlg.set_current_folder(self.default_loc)
+        default_loc = self.config.get_default_loc()
+        if default_loc: dlg.set_current_folder(default_loc)
 
         response = dlg.run()
         if response == gtk.RESPONSE_OK:
@@ -512,56 +427,6 @@ class OrganizerWindow:
             pr.print_puzzle(self.win)
         else:
             self.notify('Printing support is not available (need GTK 2.10+).')
-
-    def read_config(self):
-        c = ConfigParser.ConfigParser()
-        c.read(config_path('crossword.cfg'))
-        if c.has_section('options'):
-            if c.has_option('options', 'skip_filled'):
-                self.skip_filled = c.getboolean('options', 'skip_filled')
-            if c.has_option('options', 'start_timer'):
-                self.start_timer = c.getboolean('options', 'start_timer')
-            if c.has_option('options', 'layout'):
-                self.layout = c.getint('options', 'layout')
-            if c.has_option('options', 'positions'):
-                self.positions = eval(c.get('options', 'positions'))
-            if c.has_option('options', 'window_size'):
-                self.window_size = eval(c.get('options', 'window_size'))
-            if c.has_option('options', 'maximized'):
-                self.maximized = eval(c.get('options', 'maximized'))
-            if c.has_option('options', 'default_loc'):
-                self.default_loc = eval(c.get('options', 'default_loc'))
-
-    def write_config(self):
-        c = ConfigParser.ConfigParser()
-        c.add_section('options')
-        c.set('options', 'skip_filled', self.skip_filled)
-        c.set('options', 'start_timer', self.start_timer)
-        c.set('options', 'layout', self.layout)
-        c.set('options', 'positions', repr(self.positions))
-        c.set('options', 'window_size', repr(self.window_size))
-        c.set('options', 'maximized', repr(self.maximized))
-        c.set('options', 'default_loc', repr(self.default_loc))
-        c.write(file(config_path('crossword.cfg'), 'w'))
-
-    def setup_config_dir(self):
-        if not os.path.exists(CONFIG_DIR):
-            def try_copy(fname):
-                path1 = os.path.expanduser(os.path.join('~', '.' + fname))
-                if os.path.exists(path1):
-                    path2 = config_path(fname)
-                    try: os.system('cp -r %s %s' % (path1, path2))
-                    except: pass
-
-            def try_make(fname):
-                try: os.mkdir(config_path(fname))
-                except OSError: pass
-
-            os.mkdir(CONFIG_DIR)
-            try_copy('crossword_puzzles')
-            try_make('crossword_puzzles')
-            try_copy('crossword.cfg')
-            try_make('crossword-recent')
 
 if __name__ == '__main__':
     w = OrganizeWindow(fname)
