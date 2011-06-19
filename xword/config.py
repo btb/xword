@@ -27,18 +27,6 @@ class XwordConfig:
         self.set_defaults()
         self.setup_config_dir()
 
-        try: data = eval(file(CONFIG_RECENT_LIST).read())
-        except: data = []
-
-        if type(data) == type([]):
-            for x in data:
-                if type(x) != type(()): data = []
-                if len(x) != 2: data = []
-        else:
-            data = []
-
-        self.recent = data
-
     def set_defaults(self):
         self.skip_filled = False
         self.start_timer = False
@@ -189,14 +177,30 @@ class XwordConfig:
     def get_puzzle_file(self, puzzle):
         return os.path.join(CONFIG_PUZZLE_DIR, puzzle.hashcode())
 
-    # Returns a (title, hashcode) list
+    def read_recent(self):
+        try: data = eval(file(CONFIG_RECENT_LIST).read())
+        except: data = []
+
+        if type(data) == type([]):
+            for x in data:
+                if type(x) != type(()): data = []
+                if len(x) != 2: data = []
+        else:
+            data = []
+
+        self.recent = data
+
     def recent_list(self):
+        self.read_recent()
+        # Returns a (title, hashcode) list
         return [ (d[PTITLE], d[PHASH]) for d in self.recent ]
 
     def remove_recent(self, hash):
+        self.read_recent()
         self.recent = [ d for d in self.recent if d[PHASH] != hash ]
         try: os.remove(os.path.join(CONFIG_RECENT_DIR, hash))
         except: pass
+        self.write_recent()
 
     def add_recent(self, puzzle):
         hashcode = puzzle.hashcode()
@@ -205,6 +209,7 @@ class XwordConfig:
             if d[PHASH] == hashcode:
                 self.recent.pop(i)
                 self.recent = [d] + self.recent
+                self.write_recent()
                 return
             i += 1
 
@@ -215,13 +220,14 @@ class XwordConfig:
         d = (hashcode, puzzle.title)
         self.recent = [d] + self.recent
         puzzle.save(os.path.join(CONFIG_RECENT_DIR, hashcode))
+        self.write_recent()
 
     def get_recent(self, hashcode):
         for d in self.recent:
             if d[PHASH] == hashcode:
                 return os.path.join(CONFIG_RECENT_DIR, hashcode)
 
-    def write(self):
+    def write_recent(self):
         f = file(CONFIG_RECENT_LIST, 'w')
         f.write(repr(self.recent))
         f.close()
