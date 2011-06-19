@@ -1,4 +1,4 @@
-__version__ = '2.0'
+__version__ = '2.0.0~rc1'
 
 __license__ = '''
 Copyright (c) 2005-2009,

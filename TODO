@@ -7,8 +7,6 @@ Before Release
 # Possible problem: Open puzzle in locked mode, reopen in unlocked, close,
 #   then when you run xword it opens back in locked
 
-# Add setup.py for distutils
-
 
 Next Release
 ============
