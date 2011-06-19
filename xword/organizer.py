@@ -39,6 +39,7 @@ ui_description = '''
       <menuitem action="Quit"/>
     </menu>
     <menu action="MenuPreferences">
+      <menuitem action="ChooseDirectory"/>
     </menu>
     <menu action="MenuHelp">
       <menuitem action="About"/>
@@ -86,6 +87,13 @@ class OrganizerWindow:
             self.done = True
             self.exit()
         handler = window.connect('destroy', destroy)
+        
+        if not self.config.get_organizer_directories():
+            opts = ['Skip', 'Configure']
+            msg = ('You have not configured a puzzle directory to scan for puzzle'
+                   + ' files. Would you like to configure it now?')
+            if self.ask(msg, opts) == 1:
+                self.choose_directory(False)
         
         pbar = self.create_progress_bar(window)
         
@@ -351,6 +359,7 @@ class OrganizerWindow:
             mk('Recent4', None, 'No recent item'),
 
             mk('MenuPreferences', None, 'Preferences'),
+            mk('ChooseDirectory', None, 'Puzzle Directory...'),
 
             mk('MenuHelp', None, '_Help'),
             mk('About', None, 'About'),
@@ -384,6 +393,8 @@ class OrganizerWindow:
             self.page_setup()
         elif name == 'About':
             self.show_about()
+        elif name == 'ChooseDirectory':
+            self.choose_directory()
         elif name.startswith('Recent'):
             index = int(name[len('Recent'):])
             self.open_recent(index)
@@ -403,6 +414,28 @@ class OrganizerWindow:
             fname = dlg.get_filename()
             dlg.destroy()
             self.launch_puzzle(fname)
+        else:
+            dlg.destroy()
+    
+    def choose_directory(self, refresh=True):
+        dlg = gtk.FileChooserDialog("Choose Puzzle Directory to Scan...",
+                                    None,
+                                    gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                    (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                     gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dlg.set_default_response(gtk.RESPONSE_OK)
+        default_loc = self.config.get_default_loc()
+        if len(self.config.get_organizer_directories()) > 0:
+            default_loc = self.config.get_organizer_directories()[0]
+        if default_loc: dlg.set_current_folder(default_loc)
+
+        response = dlg.run()
+        if response == gtk.RESPONSE_OK:
+            dir = dlg.get_filename()
+            dlg.destroy()
+            self.config.set_organizer_directories([dir])
+            if refresh:
+                self.refresh_model()
         else:
             dlg.destroy()
     

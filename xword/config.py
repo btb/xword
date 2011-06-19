@@ -1,5 +1,7 @@
 import os.path
 import ConfigParser
+import csv
+import StringIO
 
 CONFIG_DIR = os.path.expanduser(os.path.join('~', '.xword'))
 CONFIG_FILE = os.path.join(CONFIG_DIR, 'crossword.cfg')
@@ -37,6 +39,7 @@ class XwordConfig:
         self.organizer_window_size = (900, 600)
         self.organizer_maximized = False
         self.default_loc = None
+        self.organizer_directories = []
 
     def read_config(self):
         c = ConfigParser.ConfigParser()
@@ -60,6 +63,15 @@ class XwordConfig:
                 self.organizer_maximized = eval(c.get('options', 'organizer_maximized'))
             if c.has_option('options', 'default_loc'):
                 self.default_loc = eval(c.get('options', 'default_loc'))
+            if c.has_option('options', 'organizer_directories'):
+                self.organizer_directories = []
+                dirs = c.get('options', 'organizer_directories')
+                if len(dirs) > 0:
+                    parser = csv.reader([dirs])
+                    dirslist = []
+                    for row in parser:
+                        self.organizer_directories = row
+                        break
 
     def write_config(self):
         c = ConfigParser.ConfigParser()
@@ -73,6 +85,11 @@ class XwordConfig:
         c.set('options', 'organizer_window_size', repr(self.organizer_window_size))
         c.set('options', 'organizer_maximized', repr(self.organizer_maximized))
         c.set('options', 'default_loc', repr(self.default_loc))
+        dirstring = StringIO.StringIO()
+        if len(self.organizer_directories) > 0:
+            writer = csv.writer(dirstring)
+            writer.writerow(self.organizer_directories)
+        c.set('options', 'organizer_directories', dirstring.getvalue().rstrip())
         c.write(file(CONFIG_FILE, 'w'))
 
     def set_skip_filled(self, skip_filled):
@@ -156,6 +173,15 @@ class XwordConfig:
         self.read_config()
         return self.default_loc
 
+    def set_organizer_directories(self, organizer_directories):
+        self.read_config()
+        self.organizer_directories = organizer_directories
+        self.write_config()
+        
+    def get_organizer_directories(self):
+        self.read_config()
+        return self.organizer_directories
+        
     def setup_config_dir(self):
         if not os.path.exists(CONFIG_DIR):
             def try_copy(oldname, fname):

@@ -139,53 +139,56 @@ class Model:
         
         modelHashes = {}
         
-        dir = 'puzzles'
-        
-        scanTotal = float(len(os.listdir(dir)) + len(self.config.recent_list()) + len(os.listdir(config.CONFIG_PUZZLE_DIR)))
+        scanTotal = float(len(self.config.recent_list()) + len(os.listdir(config.CONFIG_PUZZLE_DIR)))
+        for dir in self.config.get_organizer_directories():
+            if (os.path.exists(dir)):
+                scanTotal += float(len(os.listdir(dir)))
         scanned = 0
         
-        for f in os.listdir(dir):
-            scanned += 1
-            update_func(float(scanned) / scanTotal)
-            while gtk.events_pending():
-                gtk.main_iteration()
-            if done_func():
-                return
-                
-            fname = os.path.join(dir, f) 
-            if fname.endswith('.puz') and os.path.isfile(fname):
-                p = puzzle.Puzzle(fname)
-                hashcode = p.hashcode()
-                (squares, date, title, source) = analyze_puzzle(p, f)
-                if not date:
-                    date = datetime.datetime.fromtimestamp(os.path.getmtime(fname))
-                if hashcode in modelHashes:
-                    if model.iter_is_valid(modelHashes[hashcode]):
-                        model.set(modelHashes[hashcode], INNER_TITLE, p.title.replace(u'\xa0', u' ').strip(),
-                                  INNER_AUTHOR, p.author.replace(u'\xa0', u' ').strip(),
-                                  INNER_COPYRIGHT, p.copyright.replace(u'\xa0', u' ').strip(),
-                                  INNER_LOCATION, fname, INNER_DATE, date, INNER_SOURCE, source,
-                                  INNER_TITLE2, title)
-                    else:
-                        for row in model:
-                            if row[INNER_HASHCODE] == hashcode:
-                                row[INNER_TITLE] = p.title.replace(u'\xa0', u' ').strip()
-                                row[INNER_AUTHOR] = p.author.replace(u'\xa0', u' ').strip()
-                                row[INNER_COPYRIGHT] = p.copyright.replace(u'\xa0', u' ').strip()
-                                row[INNER_LOCATION] = fname
-                                row[INNER_DATE] = date
-                                row[INNER_SOURCE] = source
-                                row[INNER_TITLE2] = title
-                                modelHashes[hashcode] = row.iter
-                                break
-                else:
-                    iter = model.append()
-                    model.set(iter, INNER_HASHCODE, hashcode, INNER_TITLE, p.title.replace(u'\xa0', u' ').strip(),
-                              INNER_AUTHOR, p.author.replace(u'\xa0', u' ').strip(),
-                              INNER_COPYRIGHT, p.copyright.replace(u'\xa0', u' ').strip(), INNER_HSIZE, p.width, INNER_VSIZE, p.height,
-                              INNER_SQUARES, squares, INNER_COMPLETE, 0, INNER_ERRORS, 0, INNER_CHEATS, 0, INNER_LOCATION, fname,
-                              INNER_DATE, date, INNER_SOURCE, source, INNER_TITLE2, title)
-                    modelHashes[hashcode] = iter
+        for dir in self.config.get_organizer_directories():
+            if (os.path.exists(dir)):
+                for f in os.listdir(dir):
+                    scanned += 1
+                    update_func(float(scanned) / scanTotal)
+                    while gtk.events_pending():
+                        gtk.main_iteration()
+                    if done_func():
+                        return
+                        
+                    fname = os.path.join(dir, f) 
+                    if fname.endswith('.puz') and os.path.isfile(fname):
+                        p = puzzle.Puzzle(fname)
+                        hashcode = p.hashcode()
+                        (squares, date, title, source) = analyze_puzzle(p, f)
+                        if not date:
+                            date = datetime.datetime.fromtimestamp(os.path.getmtime(fname))
+                        if hashcode in modelHashes:
+                            if model.iter_is_valid(modelHashes[hashcode]):
+                                model.set(modelHashes[hashcode], INNER_TITLE, p.title.replace(u'\xa0', u' ').strip(),
+                                          INNER_AUTHOR, p.author.replace(u'\xa0', u' ').strip(),
+                                          INNER_COPYRIGHT, p.copyright.replace(u'\xa0', u' ').strip(),
+                                          INNER_LOCATION, fname, INNER_DATE, date, INNER_SOURCE, source,
+                                          INNER_TITLE2, title)
+                            else:
+                                for row in model:
+                                    if row[INNER_HASHCODE] == hashcode:
+                                        row[INNER_TITLE] = p.title.replace(u'\xa0', u' ').strip()
+                                        row[INNER_AUTHOR] = p.author.replace(u'\xa0', u' ').strip()
+                                        row[INNER_COPYRIGHT] = p.copyright.replace(u'\xa0', u' ').strip()
+                                        row[INNER_LOCATION] = fname
+                                        row[INNER_DATE] = date
+                                        row[INNER_SOURCE] = source
+                                        row[INNER_TITLE2] = title
+                                        modelHashes[hashcode] = row.iter
+                                        break
+                        else:
+                            iter = model.append()
+                            model.set(iter, INNER_HASHCODE, hashcode, INNER_TITLE, p.title.replace(u'\xa0', u' ').strip(),
+                                      INNER_AUTHOR, p.author.replace(u'\xa0', u' ').strip(),
+                                      INNER_COPYRIGHT, p.copyright.replace(u'\xa0', u' ').strip(), INNER_HSIZE, p.width, INNER_VSIZE, p.height,
+                                      INNER_SQUARES, squares, INNER_COMPLETE, 0, INNER_ERRORS, 0, INNER_CHEATS, 0, INNER_LOCATION, fname,
+                                      INNER_DATE, date, INNER_SOURCE, source, INNER_TITLE2, title)
+                            modelHashes[hashcode] = iter
         
         for (title, hash) in self.config.recent_list():
             scanned += 1
@@ -200,7 +203,7 @@ class Model:
                 p = puzzle.Puzzle(fname)
                 hashcode = p.hashcode()
                 if hashcode not in modelHashes:
-                    (squares, date, title, source) = analyze_puzzle(p, f)
+                    (squares, date, title, source) = analyze_puzzle(p, '')
                     if not date:
                         date = datetime.datetime.fromtimestamp(os.path.getmtime(fname))
                     iter = model.append()
