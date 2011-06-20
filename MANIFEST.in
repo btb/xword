@@ -1,0 +1,3 @@
+include xword/pixmaps/*.png
+include LICENSE
+include TODO

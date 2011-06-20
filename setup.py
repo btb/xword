@@ -23,9 +23,6 @@ setup(
     license = "BSD",
     
     packages = ["xword"],
-    scripts = ["xword.py"],
-    data_files = [("pixmaps", ["pixmaps/crossword-check.png",
-                               "pixmaps/crossword-check-all.png",
-                               "pixmaps/crossword-clock.png",
-                               "pixmaps/crossword-solve.png"])],
+    scripts = ["scripts/xword"],
+    package_data = {"xword": ["pixmaps/*.png"]},
     )

@@ -23,7 +23,7 @@ import os.path
 import subprocess
 import wnck
 
-HOME_PATH = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
+HOME_PATH = os.path.abspath(os.path.dirname(__file__))
 
 stock_items = [
     ('xw-check-word', 'pixmaps/crossword-check.png'),
