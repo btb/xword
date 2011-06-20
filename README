@@ -1,0 +1,130 @@
+This is the README file for xword, describing how to build and install
+it with the Python distutils utility.
+
+This README file is for xword version 2.0.0 or later.
+
+Installation:
+-------------
+
+Installation is similar to other Python libraries.  If your system is
+well-set-up, and has the required libraries, there should be no
+difficulties.
+
+The executive summary of steps is:
+
+> tar -xzf xword-<version>.tar.gz
+> cd xword-<version>
+> python setup.py build
+> python setup.py install
+
+but please read the rest of this file before proceeding.
+
+If something goes wrong, your system adminstrator may be able to help
+you, or you can contact the xword developers at
+xword-devel@lists.alioth.debian.org. It's diagnostically useful to
+include all the output from setup.py.
+
+xword has been built and tested on Linux (Debian, Ubuntu).
+
+Details:
+--------
+
+0. What You Should Already Have:
+
+   The following external programs and libraries must be present
+   before you can run xword.
+
+   Python (2.4 through 2.7) http://www.python.org 
+   gtk+-2.0 (2.4 or later)  http://www.gtk.org/download/   
+   pygtk2 (2.4 or later)    http://www.pygtk.org
+   python-bindings for the wnck-library
+                            http://rox4debian.berlios.de/0install/Python-Wnck.xml
+
+1. What You Got From Us:
+   
+   The file "xword-<version>.tar.gz".
+
+
+Procedure:
+----------
+
+0. Unpack
+
+   Unpack the .tar.gz file.  The usual way is to run "tar -xzf" on the
+   file you want to unpack.  This will create a subdirectory named
+   "xword-<version>" in the directory where you run tar.
+
+1. Build the xword library
+
+   Switch to the newly-created directory, and run
+
+     % python setup.py build
+
+   The build command will create a "build" subdirectory in the top
+   xword directory.  Within "build" it will create a subdirectory with
+   a system-dependent name.
+
+2. Install
+
+   To install xword, run
+
+       % python setup.py install
+
+   This will install xword in the standard location for Python
+   extensions on your system.  This is good, because then you won't
+   have to do anything special to get xword to run.  It's also bad,
+   because unless you are the system administrator, you probably don't
+   have permission to install anything in that directory.  You have
+   two options:
+
+    a) Get a system administrator, become root, or use "sudo" to run
+       the installation step.
+
+    b) Tell distutils to install xword in a different place, like this:
+
+        % python setup.py install --prefix=<prefix>
+
+    where <prefix> is a directory that you can write to.  The default
+    value of <prefix> is usually /usr/local.
+
+    The installation procedure will create an executable script called
+    "xword" in <prefix>/bin, and a directory called "xword" in
+    <prefix>/lib/python2.x/site-packages (where 2.x is your python
+    version number). 
+
+    (It's possible to use --home=<home> instead of --prefix when
+    installing xword.  The only difference is that --home will put the
+    python libraries in <home>/lib/python instead of
+    <prefix>/lib/python2.x/site-packages.)
+
+2.1. Set environment variables
+
+    If <prefix>/bin is not in your Unix command path, you'll need to
+    add it to the PATH environment variable, or create a symbolic link
+    from a directory that is in your path (or start xword the hard way
+    by by typing <prefix>/bin/xword).  (Typing "echo $PATH" will print
+    the current value of your path.  The method for setting
+    environment variables depends on which Unix shell you're using.)
+
+    If <prefix>/lib/python2.x/site-packages is not in your Python
+    path, you'll have to add it to the PYTHONPATH environment
+    variable.   (Running the command
+        % python -c "import sys; print sys.path"
+    will print your Python path.)
+
+
+Running xword:
+--------------
+
+At this point, you should have an executable file named "xword" in a
+bin directory in your execution path.  You can now simply type "xword"
+at your shell prompt, and xword will start up.
+
+You may also run xword from the unpacked .tar.gz directory, with the command
+
+    % PYTHONPATH=. scripts/xword
+
+By default, xword runs in organizer mode, displaying a list of known
+crossword puzzle files to get you started.  If you don't want this,
+you can specify the crossword puzzle file to open on the command-line.
+
