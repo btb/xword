@@ -10,7 +10,7 @@ from distutils.core import setup
 import xword
 
 setup(
-    name = "Xword",
+    name = "xword",
     version = xword.__version__,
     description = "Reads and writes crossword puzzles in the Across Lite file format",
     long_description = "Xword is a GTK+ program that works well for doing crossword puzzles in the" \

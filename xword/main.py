@@ -468,7 +468,8 @@ class MainWindow:
         dialog.set_version(__version__)
         dialog.set_license(__license__)
         dialog.set_authors(
-            ['Bill McCloskey <bill.mccloskey@gmail.com>\n' +
+            ['Cameron Dale <camrdale@gmail.com>\n' +
+             'Bill McCloskey <bill.mccloskey@gmail.com>\n' +
              'Maemo Port: Bradley Bell <bradleyb@u.washington.edu>\n' +
              'and Terrence Fleury <terrencegf@gmail.com>'])
         dialog.set_website('http://x-word.org')

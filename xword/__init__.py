@@ -1,8 +1,8 @@
 __version__ = '2.0.0~rc1'
 
 __license__ = '''
-Copyright (c) 2005-2009,
-  Bill McCloskey    <bill.mccloskey@gmail.com>
+Copyright (c) 2009-2011,  Cameron Dale <camrdale@gmail.com>
+Copyright (c) 2005-2009,  Bill McCloskey <bill.mccloskey@gmail.com>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
