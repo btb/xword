@@ -1,4 +1,4 @@
-__version__ = '2.0.0~rc1'
+__version__ = '2.0.0~rc2'
 
 __license__ = '''
 Copyright (c) 2009-2011,  Cameron Dale <camrdale@gmail.com>
