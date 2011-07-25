@@ -1,5 +1,3 @@
-import os
-
 NO_ERROR = 0
 MISTAKE = 1
 FIXED_MISTAKE = 2

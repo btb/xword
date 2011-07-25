@@ -1,5 +1,6 @@
 import gtk
 import pango
+import math
 
 import puzzle
 
