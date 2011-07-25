@@ -3,6 +3,7 @@ import controller
 import grid
 import printing
 import config
+import __init__
 
 import pygtk
 pygtk.require('2.0')
@@ -465,8 +466,8 @@ class MainWindow:
         except:
             pass
         dialog.set_name('Xword')
-        dialog.set_version(__version__)
-        dialog.set_license(__license__)
+        dialog.set_version(__init__.__version__)
+        dialog.set_license(__init__.__license__)
         dialog.set_authors(
             ['Cameron Dale <camrdale@gmail.com>\n' +
              'Bill McCloskey <bill.mccloskey@gmail.com>\n' +
@@ -915,7 +916,7 @@ class MainWindow:
 
         response = dlg.run()
         if response == gtk.RESPONSE_OK:
-            self.do_save_file(save_dlg.get_filename())
+            self.do_save_file(dlg.get_filename())
         dlg.destroy()
 
     def open_organizer(self):
@@ -952,5 +953,5 @@ if __name__ == '__main__':
     if len(sys.argv) <> 2: fname = None
     else: fname = sys.argv[1]
         
-    w = PuzzleWindow(fname)
+    w = MainWindow(fname)
     gtk.main()

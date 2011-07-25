@@ -2,6 +2,7 @@ import puzzle
 import printing
 import model
 import config
+import __init__
 
 import pygtk
 pygtk.require('2.0')
@@ -299,8 +300,8 @@ class OrganizerWindow:
         except:
             pass
         dialog.set_name('Xword')
-        dialog.set_version(__version__)
-        dialog.set_license(__license__)
+        dialog.set_version(__init__.__version__)
+        dialog.set_license(__init__.__license__)
         dialog.set_authors(
             ['Cameron Dale <camrdale@gmail.com>\n' +
              'Bill McCloskey <bill.mccloskey@gmail.com>\n' +
@@ -463,5 +464,5 @@ class OrganizerWindow:
             self.notify('Printing support is not available (need GTK 2.10+).')
 
 if __name__ == '__main__':
-    w = OrganizeWindow(fname)
+    w = OrganizerWindow()
     gtk.main()
