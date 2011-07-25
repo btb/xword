@@ -30,6 +30,8 @@ stock_items = [
     ('xw-check-word', 'pixmaps/crossword-check.png'),
     ('xw-check-puzzle', 'pixmaps/crossword-check-all.png'),
     ('xw-solve-word', 'pixmaps/crossword-solve.png'),
+    ('xw-solve-puzzle', 'pixmaps/crossword-solve-all.png'),
+    ('xw-notepad', 'pixmaps/crossword-notepad.png'),
     ('xw-clock', 'pixmaps/crossword-clock.png'),
     ]
 
@@ -51,6 +53,7 @@ ui_description = '''
       <menuitem action="PuzzleOrganizer"/>
       <menuitem action="Save"/>
       <menuitem action="AboutPuzzle"/>
+      <menuitem action="ShowNotepad"/>
       <separator/>
       <menuitem action="PageSetup"/>
       <menuitem action="Print"/>
@@ -91,6 +94,7 @@ ui_description = '''
   </menubar>
   <toolbar name="Toolbar">
     <toolitem action="AboutPuzzle"/>
+    <toolitem action="ShowNotepad"/>
     <toolitem action="Open"/>
     <toolitem action="PuzzleOrganizer"/>
     <toolitem action="Save"/>
@@ -99,6 +103,7 @@ ui_description = '''
     <toolitem action="CheckWord"/>
     <toolitem action="CheckPuzzle"/>
     <toolitem action="SolveWord"/>
+    <toolitem action="SolvePuzzle"/>
     <separator expand="true"/>
     <toolitem action="Clock"/>
   </toolbar>
@@ -258,6 +263,7 @@ class MainWindow:
         enable('PageSetup', enabled)
         enable('Print', enabled)
         enable('AboutPuzzle', enabled)
+        enable('ShowNotepad', enabled and len(self.puzzle.notebook) > 0)
         enable('ClearWord', enabled)
         enable('ClearPuzzle', enabled)
         enable('CheckLetter', enabled and not locked)
@@ -361,7 +367,7 @@ class MainWindow:
             self.activate_clock(True)
 
         if len(puzzle.notebook) > 0 and fresh:
-            self.notify('This puzzle has a notebook attached:\n'
+            self.notify('This puzzle has a notepad attached:\n'
                         + puzzle.notebook)
 
     def write_puzzle(self):
@@ -422,13 +428,13 @@ class MainWindow:
         msg += 'Author: ' + self.puzzle.author + '\n'
         msg += 'Copyright: ' + self.puzzle.copyright
         if self.puzzle.notebook != '':
-            msg += '\n\nNotebook:\n' + self.puzzle.notebook
+            msg += '\n\nNotepad:\n' + self.puzzle.notebook
 
         mmsg = '<b>Title:</b> ' + self.puzzle.title + '\n'
         mmsg += '<b>Author:</b> ' + self.puzzle.author + '\n'
         mmsg += '<b>Copyright:</b> ' + self.puzzle.copyright
         if self.puzzle.notebook != '':
-            mmsg += '\n\n<b>Notebook:</b>\n' + self.puzzle.notebook
+            mmsg += '\n\n<b>Notepad:</b>\n' + self.puzzle.notebook
         
         dialog = gtk.MessageDialog(parent=self.win,
                                    type=gtk.MESSAGE_INFO,
@@ -618,6 +624,7 @@ class MainWindow:
             mk('Save', gtk.STOCK_SAVE, tooltip='Save this puzzle'),
             mk('PuzzleOrganizer', gtk.STOCK_DIRECTORY, 'Puzzle Organizer', 'Open the Xword Puzzle Organizer'),
             mk('AboutPuzzle', gtk.STOCK_INFO, 'About puzzle', 'About this puzzle'),
+            mk('ShowNotepad', 'xw-notepad', 'Show notepad', 'Display the notepad attached to this puzzle'),
             mk('PageSetup', None, 'Page setup...'),
             mk('Print', gtk.STOCK_PRINT, tooltip='Print this puzzle'),
             mk('Close', gtk.STOCK_CLOSE),
@@ -640,7 +647,7 @@ class MainWindow:
                'Check the entire puzzle'),
             mk('SolveLetter', None, 'Solve letter'),
             mk('SolveWord', 'xw-solve-word', 'Solve word', 'Solve the current word'),
-            mk('SolvePuzzle', None, 'Solve puzzle'),
+            mk('SolvePuzzle', 'xw-solve-puzzle', 'Solve puzzle', 'Solve the entire puzzle'),
 
             mk('MenuPreferences', None, 'Preferences'),
             mk('MenuLayout', None, 'Layout'),
@@ -709,6 +716,10 @@ class MainWindow:
             self.show_about()
         elif name == 'AboutPuzzle':
             self.show_about_puzzle()
+        elif name == 'ShowNotepad':
+            self.notify('This puzzle has a notepad attached:\n'
+                        + self.puzzle.notebook)
+
         elif name == 'Shortcuts':
             self.show_keyboard_shortcuts()
         elif name.startswith('Recent'):
